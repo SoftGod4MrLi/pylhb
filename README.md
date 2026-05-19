@@ -467,7 +467,7 @@ if __name__ == "__main__":
 
 ```
 import time
-from .myspinner import SpinnerStyle,MySpinner
+from pylhb.myspinner import SpinnerStyle,MySpinner
 
 if __name__ == "__main__":
     # 盲文风格（最漂亮）
