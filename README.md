@@ -6,9 +6,15 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/SoftGod4MrLi/pylhb?style=flat)
 [![GitHub forks](https://img.shields.io/github/forks/SoftGod4MrLi/pylhb?style=flat&logo=github)](https://github.com/SoftGod4MrLi/pylhb)
 
-pylhb是我平时工作中写的一些工具集锦，水平有限，欢迎指正。
+pylhb 是我在工作过程中陆续整理的一个 Python 工具包，里面放了一些自己反复用到的模块和函数。与其说是一个正式的开源项目，不如说是我自己的“代码杂物间”——只不过把它打包了一下，方便在不同项目之间复用。
+> 由于是个人使用为主，很多设计可能带着比较强的个人习惯，也未必是最优解。如果您发现了问题或有更好的建议，非常欢迎指正。
 
-## 🌺commands
+## 安装
+```
+pip install pylhb
+```
+
+## 🌺命令
 ### Microsoft SQL Server命令：
 - 创建数据库
 ```
