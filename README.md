@@ -1,3 +1,13 @@
+# pylhb
+
+[![PyPI version](https://img.shields.io/pypi/v/pylhb.svg)](https://pypi.org/project/pylhb/)
+[![GitHub stars](https://img.shields.io/github/stars/SoftGod4MrLi/pylhb?style=flat&logo=github)](https://github.com/SoftGod4MrLi/pylhb)
+[![GitHub license](https://img.shields.io/github/license/SoftGod4MrLi/pylhb?style=flat)](https://github.com/SoftGod4MrLi/pylhb/blob/main/LICENSE)
+![GitHub repo size](https://img.shields.io/github/repo-size/SoftGod4MrLi/pylhb?style=flat)
+[![GitHub forks](https://img.shields.io/github/forks/SoftGod4MrLi/pylhb?style=flat&logo=github)](https://github.com/SoftGod4MrLi/pylhb)
+
+pylhb是我平时工作中写的一些工具集锦，水平有限，欢迎指正。
+
 ## 🌺commands
 ### Microsoft SQL Server命令：
 - 创建数据库
