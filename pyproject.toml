@@ -1,6 +1,6 @@
 [project]
 name = "pylhb"
-version = "1.6.8"
+version = "1.6.9"
 description = "Mr.Lee's Helpers"
 readme = "README.md"
 license = {file = "LICENSE"} 
@@ -12,6 +12,13 @@ dependencies = [
     "pyodbc>=5.3.0",
     "requests>=2.33.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/SoftGod4MrLi/pylhb"
+Documentation = "https://github.com/SoftGod4MrLi/pylhb"
+Repository = "https://github.com/SoftGod4MrLi/pylhb"
+Issues = "https://github.com/SoftGod4MrLi/pylhb/issues"
+
 [project.scripts]
 pylhb = "pylhb:main"
 
