@@ -54,9 +54,17 @@ pylhb mssql clearnull -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer
 ```
 pylhb mssql drop -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test --force
 ```
+- 执行SQL脚本
+```
+pylhb mssql runsql -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --sql “SELECT * FROM Dt_Users”
+```
 - 执行SQL文件
 ```
-pylhb mssql runsql -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\test.sql
+pylhb mssql runsqlfile -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\test.sql
+```
+- 打开SSMS
+```
+pylhb mssql open
 ```
 ### IIS命令：
 - 创建应用程序池
@@ -135,6 +143,10 @@ pylhb iis backupiis --backupname bk2026
 - 恢复IIS
 ```
 pylhb iis restoreiis --backupname bk2026
+```
+- 打开IIS管理器
+```
+pylhb iis open
 ```
 
 ## 🌺mymssql模块

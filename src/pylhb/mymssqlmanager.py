@@ -7,6 +7,7 @@ import os
 import re
 from datetime import datetime
 from .mymssql import MyMSSQL
+import subprocess
 
 class MyMSSQLManager:
     """Microsoft SQL Server 管理"""
@@ -268,41 +269,87 @@ class MyMSSQLManager:
         except Exception as e:
             return False,f"{e}"
 
-    def runSQL(self,fileFullName) -> tuple[bool, str, list]:
-        errors=[]
+    def runSQL(self,sql) -> tuple[bool,str]:
+        """
+        执行SQL脚本
+        Args:
+            sql：SQL脚本
+        Returns:
+            是否成功
+            执行结果
+        """
         try:
             mssql=MyMSSQL(server=self.server,port=self.port,user=self.user,password=self.password,database=self.database,autoCommit=True,trusted=self.trusted)
             (successed,msg)=mssql.connect()
             if successed:
-                # 读取 SQL 文件
-                with open(fileFullName, 'r', encoding='utf-8') as file:
-                    sqlContent = file.read()
-                # 分割 SQL 语句（按分号分割，需要处理字符串中的分号和注释）
-                sqlStatements = self._splitSQL(sqlContent)
-                # 遍历执行
-                for i, statement in enumerate(sqlStatements, 1):
-                    # 跳过空语句
-                    if not statement or not statement.strip():
-                        continue
-                    (successed,msg)=mssql.exec(statement)
-                    if successed==False:
-                        errors.append(f"执行（{statement}）：{msg}")
-                return True,"OK",errors
+                (successed,msg)=mssql.exec(sql)
+                if successed:
+                    return True,"OK"
+                else:
+                    return False,msg
             else:
-                return False,msg,errors
+                return False,msg
+        except Exception as e:
+            return False,f"{e}"
+
+    def runSQLFile(self,fileFullName,userSQLCMD) -> tuple[bool, str, list]:
+        """
+        执行SQL文件
+        Args:
+            fileFullName：SQL文件
+            useSQLCMD：是否用sqlcmd来执行
+        Returns:
+            是否成功
+            结果
+            错误列表
+        """
+        errors=[]
+        try:
+            if userSQLCMD:
+                if self.trusted:
+                    (sucessed,msg) = self._runSQLWithSQLCMD4Trusted(fileFullName);
+                    if successed:
+                        return True,"OK",errors
+                    else:
+                        errors.append(msg)
+                        return False,msg,errors
+                else:
+                    (sucessed,msg) = self._runSQLWithSQLCMD(fileFullName)
+                    if successed:
+                        return True,"OK",errors
+                    else:
+                        errors.append(msg)
+                        return False,msg,errors
+            else:
+                mssql=MyMSSQL(server=self.server,port=self.port,user=self.user,password=self.password,database=self.database,autoCommit=True,trusted=self.trusted)
+                (successed,msg)=mssql.connect()
+                if successed:
+                    # 读取 SQL 文件
+                    with open(fileFullName, 'r', encoding='utf-8') as file:
+                        sqlContent = file.read()
+                    # 分割 SQL 语句（按分号分割，需要处理字符串中的分号和注释）
+                    sqlStatements = self._splitSQL(sqlContent)
+                    # 遍历执行
+                    for i, statement in enumerate(sqlStatements, 1):
+                        # 跳过空语句
+                        if not statement or not statement.strip():
+                            continue
+                        (successed,msg)=mssql.exec(statement)
+                        if successed==False:
+                            errors.append(f"执行（{statement}）：{msg}")
+                    return True,"OK",errors
+                else:
+                    return False,msg,errors
         except Exception as e:
             return False,f"{e}",errors
 
     def _splitSQL(self,sql_content):
         """
-        增强版：根据 GO 关键字拆分，支持 GO {count} 语法
-        
+        根据 GO 关键字拆分，支持 GO {count} 语法
         Args:
             sql_content (str): SQL 文件内容
-        
         Returns:
             list: SQL 语句列表（如果 GO 带数字，会返回对应数量的重复语句）
-        
         Example:
             "INSERT INTO t VALUES(1)\nGO 3" 会返回 3 条相同的 INSERT 语句
         """
@@ -341,6 +388,60 @@ class MyMSSQLManager:
                 statements.append(statement)
         return statements
 
-    
+    def _runSQLWithSQLCMD4Trusted(self,fileFullName) -> tuple[bool,str]:
+        """
+        使用 Windows 身份验证执行 SQL 文件
+        """
+        cmd = [
+            'sqlcmd',
+            '-S', self.server,
+            '-d', self.database,
+            '-E',                   # 使用 Windows 身份验证
+            '-i', fileFullName,
+            '-b'
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            if result.stdout:
+                return True,f"{result.stdout.strip()}"
+            else:
+                return True,"OK"
+        else:
+            return False,f"{result.stderr.strip() if result.stderr else result.stdout.strip()}"
 
-    
+    def _runSQLWithSQLCMD(self,fileFullName) -> tuple[bool,str]:
+        """
+        通过 sqlcmd 执行 SQL 文件
+        """
+        # 构建 sqlcmd 命令
+        cmd = [
+            'sqlcmd',
+            '-S', self.server,           # 服务器地址
+            '-d', self.database,         # 数据库名
+            '-U', self.user,         # 用户名
+            '-P', self.password,         # 密码
+            '-i', fileFullName,    # 输入 SQL 文件
+            '-b',                   # 出错时终止
+            '-m', '1'               # 只显示错误信息
+        ]
+        
+        try:
+            # 执行命令
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding='utf-8'
+            )
+            if result.returncode == 0:
+                if result.stdout:
+                    return True,f"{result.stdout.strip()}"
+                else:
+                    return True,"OK"
+            else:
+                return False,f"{result.stderr.strip() if result.stderr else result.stdout.strip()}"
+        except subprocess.CalledProcessError as e:
+            return False,f"执行出错: {e}"
+        except FileNotFoundError:
+            return False,"未找到 sqlcmd，请确保已安装 SQL Server 命令行工具"

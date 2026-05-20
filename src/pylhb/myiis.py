@@ -25,9 +25,9 @@ class MyIIS:
             result = subprocess.run(fullCommand, shell=True, capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 if result.stdout:
-                    return result.returncode == 0,f"{result.stdout.strip()}"
+                    return True,f"{result.stdout.strip()}"
                 else:
-                    return result.returncode == 0,"OK"
+                    return True,"OK"
             else:
                 return False,f"{result.stderr.strip() if result.stderr else result.stdout.strip()}"
         except Exception as e:

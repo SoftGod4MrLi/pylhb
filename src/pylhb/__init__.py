@@ -1,7 +1,5 @@
 import argparse
 import platform
-from re import L
-from threading import main_thread
 # Base
 from .lhb import showVersion,showDeviceInfos,MyMSSQLDo,IISDo
 # Mr.Lee's Module
@@ -70,9 +68,9 @@ def main() -> None:
     # 位置参数
     parser.add_argument("commands", nargs="?", default=None, choices=["mssql", "iis"], help="Commands")
     parser.add_argument("subcommands", nargs="?", default=None, choices=["create","attach","fujia","detach","fenli","backup","backupall","restore", 
-        "dellog","clearnull","drop","runsql","createapppool","deleteapppool","createwebsite","createwebsiteapp",
+        "dellog","clearnull","drop","runsql","runsqlfile","createapppool","deleteapppool","createwebsite","createwebsiteapp",
         "deletewebsite","deletewebsiteapp","checkapppool","checkwebsite","checkwebsiteapp","startapppool","stopapppool","startwebsite",
-        "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis"], help="Subcommands")
+        "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis","open"], help="Subcommands")
     # 常规参数
     parser.add_argument('-v', '--version', action='store_true', help='显示版本号')
     parser.add_argument('-d', '--deviceinfos', action='store_true', help='显示设备信息')
@@ -96,6 +94,8 @@ def main() -> None:
     parser.add_argument("--path", default="", type=str, help="网站文件的物理路径")
     parser.add_argument("--hostname", default="", type=str, help="绑定的域名（可选）")
     parser.add_argument("--backupname", default="", type=str, help="备份名称")
+    parser.add_argument("--usesqlcmd", action='store_true', help='用SQLCMD执行SQL')
+    parser.add_argument("--sql", default="", type=str, help="SQL脚本")
     # 解析
     args = parser.parse_args()
 
@@ -146,9 +146,17 @@ def main() -> None:
                         else:
                             print("删除数据库必须带force参数")
                     case "runsql":
+                        # 执行SQL脚本
+                        # pylhb mssql runsql -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --sql “SELECT * FROM Dt_Users”
+                        mssql.runSQL(args.sql)
+                    case "runsqlfile":
                         # 执行SQL文件
-                        # pylhb mssql runsql -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\test.sql
-                        mssql.runSQL(args.file)
+                        # pylhb mssql runsqlfile -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\test.sql
+                        mssql.runSQLFile(args.file,args.usesqlcmd)
+                    case "open":
+                        # 打开SSMS
+                        # pylhb mssql open
+                        mssql.openSSMS()
             case "iis":
                 iis=IISDo()
                 match args.subcommands:
@@ -232,6 +240,10 @@ def main() -> None:
                         # pylhb iis restoreiis --backupname bk2026
                         # 恢复时，要把以前备份的文件夹bk2026复制到（C:\Windows\System32\inetsrv\backup）下。
                         iis.restoreIIS(args.backupname)
+                    case "open":
+                        # 打开IIS管理器
+                        # pylhb iis open
+                        iis.openIIS()
                         
     else:
         # show version

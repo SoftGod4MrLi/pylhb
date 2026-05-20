@@ -1,11 +1,13 @@
+from nt import truncate
 import os
 import platform
-from datetime import datetime, date
+from datetime import datetime
 from .mymssqlmanager import MyMSSQLManager
 from .mydevice import MyDevice
 from .myspinner import SpinnerStyle,MySpinner
 from .mymssql import MyMSSQL
 from .myiis import MyIIS
+import subprocess
 
 def showVersion():
     """显示版本号"""
@@ -59,6 +61,25 @@ class MyMSSQLDo:
         self.password=password
         self.database=database
         self.trusted=trusted
+
+    def openSSMS(self):
+        """打开SSMS"""
+        smsPaths=[r"C:\Program Files\Microsoft SQL Server Management Studio 22\Release\Common7\IDE\SSMS.exe",
+            r"C:\Program Files (x86)\Microsoft SQL Server Management Studio 20\Common7\IDE\SSMS.exe",
+            r"C:\Program Files (x86)\Microsoft SQL Server Management Studio 19\Common7\IDE\SSMS.exe",
+            r"C:\Program Files (x86)\Microsoft SQL Server Management Studio 18\Common7\IDE\SSMS.exe",
+            r"C:\Program Files\Microsoft SQL Server\100\Tools\Binn\VSShell\Common7\IDE\SSMS.exe",
+            r"C:\Program Files\Microsoft SQL Server\90\Tools\Binn\VSShell\Common7\IDE\SSMS.exe"
+        ]
+        opened=False
+        for path in smsPaths:
+            if os.path.exists(path):
+                os.startfile(path)
+                subprocess.Popen(path)
+                opened=True
+                break
+        if not opened:
+            print("未找到SSMS程序。")
 
     def create(self,mdfFileName=None,ldfFileName=None,initialSize4MB = 100,maxSize4MB: int = -1,fileGrowth4MB: int = 10):
         """
@@ -228,7 +249,23 @@ class MyMSSQLDo:
         except Exception as e:
             sp.stop(f"删除失败：{e}",False)
 
-    def runSQL(self,fileFullName):
+    def runSQL(self,sql):
+        """
+        执行SQL脚本
+        """
+        sp=MySpinner(SpinnerStyle.BRAILLE, "正在执行中...")
+        sp.start()
+        try:
+            mssql=MyMSSQLManager(server=self.server,port=self.port,user=self.user,password=self.password,database=self.database,trusted=self.trusted)
+            (successed,msg)=mssql.runSQL(sql)
+            if successed:
+                sp.stop("执行成功。")
+            else:
+                sp.stop(f"执行失败：{msg}",False)
+        except Exception as e:
+            sp.stop(f"执行失败：{e}",False)
+
+    def runSQLFile(self,fileFullName,userSQLCMD):
         """
         执行SQL文件
         """
@@ -236,7 +273,7 @@ class MyMSSQLDo:
         sp.start()
         try:
             mssql=MyMSSQLManager(server=self.server,port=self.port,user=self.user,password=self.password,database=self.database,trusted=self.trusted)
-            (successed,msg,errors)=mssql.runSQL(fileFullName)
+            (successed,msg,errors)=mssql.runSQLFile(fileFullName,userSQLCMD)
             if successed:
                 sp.stop("执行成功。")
             else:
@@ -649,3 +686,7 @@ class IISDo:
                 sp.stop(f"恢复失败：{msg}",False)
         except Exception as e:
             sp.stop(f"恢复失败：{e}",False)
+
+    def openIIS(self):
+        """打开IIS管理器"""
+        subprocess.Popen('start inetmgr', shell=True)
