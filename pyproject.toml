@@ -1,10 +1,6 @@
 [project]
 name = "pylhb"
-<<<<<<< HEAD
-version = "1.8.0"
-=======
-version = "1.6.9"
->>>>>>> 185163e0f27db8aacce9ca69c26bce8e8d1ced5f
+version = "1.8.1"
 description = "Mr.Lee's Helpers"
 readme = "README.md"
 license = {file = "LICENSE"} 

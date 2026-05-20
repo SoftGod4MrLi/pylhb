@@ -400,15 +400,20 @@ class MyMSSQLManager:
             '-i', fileFullName,
             '-b'
         ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0:
-            if result.stdout:
-                return True,f"{result.stdout.strip()}"
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                if result.stdout:
+                    return True,f"{result.stdout.strip()}"
+                else:
+                    return True,"OK"
             else:
-                return True,"OK"
-        else:
-            return False,f"{result.stderr.strip() if result.stderr else result.stdout.strip()}"
+                return False,f"{result.stderr.strip() if result.stderr else result.stdout.strip()}"
+        except subprocess.CalledProcessError as e:
+            return False,f"执行出错: {e}"
+        except FileNotFoundError:
+            return False,"未找到 sqlcmd，请确保已安装 SQL Server 命令行工具"
 
     def _runSQLWithSQLCMD(self,fileFullName) -> tuple[bool,str]:
         """
