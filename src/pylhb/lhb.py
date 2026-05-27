@@ -2,12 +2,15 @@ from nt import truncate
 import os
 import platform
 from datetime import datetime
+
+from pyodbc import SQL_SERVER_NAME, getDecimalSeparator
 from .mymssqlmanager import MyMSSQLManager
 from .mydevice import MyDevice
 from .myspinner import SpinnerStyle,MySpinner
 from .mymssql import MyMSSQL
 from .myiis import MyIIS
 import subprocess
+import getpass
 
 def showVersion():
     """显示版本号"""
@@ -35,6 +38,12 @@ def showDeviceInfos():
     print(f"设备ID: {d.getDeviceID()}")
     print(f"Python版本: {platform.python_version()}")
 
+def convertStr2Int(number,defaultValue:int=0) -> int:
+    try:
+        return int(number)
+    except:
+        return defaultValue
+
 def checkAndCreatePath(path) -> bool:
     """
     检查文件夹是否存在，不存时就创建
@@ -54,7 +63,7 @@ def checkAndCreatePath(path) -> bool:
 
 class MyMSSQLDo:
     """Microsoft SQL Server 处理"""
-    def __init__(self, server,port, user, password, database,trusted=False):
+    def __init__(self, server ="127.0.0.1",port=1433, user="sa", password="", database ="master",trusted=False):
         self.server=server
         self.port=port
         self.user=user
@@ -285,6 +294,190 @@ class MyMSSQLDo:
                     print(error)
         except Exception as e:
             sp.stop(f"执行失败：{e}",False)
+
+    def intputBase(self) -> bool:
+        try:
+            print("配置基础参数[6]：")
+            self.server=input("1.服务器名称（默认为127.0.0.1）: ")
+            if not self.server:
+                self.server="127.0.0.1"
+            port=convertStr2Int(input("2.端口号（默认1433）："),1433)
+            if port==0:
+                self.port=1433
+            self.user=input("3.用户（默认sa）：")
+            if not self.user:
+                self.user="sa"
+
+            useMW=input("4.使用明文密码（Y/N，默认N）：")
+            if not useMW:
+                useMW="N"
+            if useMW.upper()=="Y":
+                self.password=input("5.密码：")
+            else:
+                self.password=getpass.getpass("5.密码：")
+            trust=input("6.用Windows身份验证（Y/N，默认N）：")
+            if not trust:
+                trust="N"
+            if trust.upper()=="Y":
+                self.trusted=True
+            else:
+                self.trusted=False
+            return True
+        except:
+            print("\n>> 错误：输入无效！")
+            return False
+        
+    def showMenu(self):
+        print("\n" + "=" * 30)
+        print("🌺🌺系统菜单")
+        print("=" * 30)
+        print("1.创建数据库")
+        print("2.附加数据库")
+        print("3.分离数据库")
+        print("4.备份数据库")
+        print("5.备份所有数据库")
+        print("6.恢复数据库")
+        print("7.删除日志")
+        print("8.清除NULL")
+        print("9.执行SQL")
+        print("10.执行SQL文件")
+        print("11.打开SSMS")
+        print("0.退出程序")
+        print("=" * 30)
+        
+    def choiceDo(self,choice)->bool:
+        match(choice):
+            case 1:
+                print("👉创建数据库[3]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    mdfFile=input("2.数据文件（空为默认）：")
+                    ldfFile=input("3.日志文件（空为默认）：")
+                    if mdfFile and ldfFile:
+                        self.create(mdfFile,ldfFile)
+                    else:
+                        self.create()
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 2:
+                print("👉附加数据库[3]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    mdfFile=input("2.数据文件：")
+                    ldfFile=input("3.日志文件：")
+                    if mdfFile and ldfFile:
+                        self.create(mdfFile,ldfFile)
+                    else:
+                        print("您已放弃：未输入正常的数据和日志文件名。")
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 3:
+                print("👉分数据库[1]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    self.detach()
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 4:
+                print("👉备份数据库[2]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    fileFullName=input("2.备份文件名（绝对路径）：")
+                    if fileFullName:
+                        self.backup(fileFullName)
+                    else:
+                        print("您已放弃：未输入正确的备份文件名。")
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 5:
+                print("👉备份所有数据库[1]：")
+                self.database="master"
+                fileFullName=input("1.备份路径（绝对路径）：")
+                if fileFullName:
+                    self.backupall(fileFullName)
+                else:
+                    print("您已放弃：未输入正确的备份文件名。")
+            case 6:
+                print("👉恢复数据库[2]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    fileFullName=input("2.备份文件名（绝对路径）：")
+                    if fileFullName:
+                        self.restore(fileFullName)
+                    else:
+                        print("您已放弃：未输入正确的备份文件名。")
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 7:
+                print("👉删除日志[1]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    self.delLog()
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 8:
+                print("👉清除NULL[1]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    self.clearNull()
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 9:
+                print("👉执行SQL[2]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    sql=input("2.SQL语句：")
+                    if sql:
+                        self.runSQL(sql)
+                    else:
+                        print("您已放弃：未输入正确的SQL。")
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 10:
+                print("👉执行SQL文件[3]：")
+                self.database=input("1.数据库名称：")
+                if self.database:
+                    sql=input("2.SQL文件（绝对路径）：")
+                    if sql:
+                        useSQLCMD=input("3.是否用SQLCMD来执行（Y或N,默认N）：")
+                        if not useSQLCMD:
+                            useSQLCMD="N"
+                        self.runSQLFile(sql,useSQLCMD.upper()=="N")
+                    else:
+                        print("您已放弃：未输入正确的SQL。")
+                else:
+                    print("您已放弃：未输入正确的数据库名称。")
+                return True
+            case 11:
+                print("👉执行SSMS[0]：")
+                self.openSSMS()
+                return True
+            case 0:
+                return False
+            case _:
+                return True
+
+    def choiceMenu(self):
+        result = self.intputBase()
+        if result:
+            running = True
+            while running:
+                self.showMenu()
+                try:
+                    user_input = input("请输入您的选择（数字）: ")
+                    choice = int(user_input)
+                    running = self.choiceDo(choice)
+                except ValueError:
+                    print("\n>> 错误：输入无效，请输入数字！")
+                    input(">> 按回车键继续...")
 
 class IISDo:
     """IIS处理"""
@@ -524,7 +717,7 @@ class IISDo:
 
     def startWebsite(self,siteName):
         """
-        启动应用程序池
+        启用网站
         Args:
             siteName: 网站名称
         Returns: 
@@ -545,7 +738,7 @@ class IISDo:
 
     def stopWebsite(self,siteName):
         """
-        停止应用程序池
+        停止网站
         Args:
             siteName: 网站名称
         Returns: 
@@ -690,3 +883,167 @@ class IISDo:
     def openIIS(self):
         """打开IIS管理器"""
         subprocess.Popen('start inetmgr', shell=True)
+
+    def showMenu(self):
+        print("\n" + "=" * 30)
+        print("🌺🌺系统菜单")
+        print("=" * 30)
+        print("1.创建应用程序池")
+        print("2.删除应用程序池")
+        print("3.创建网站")
+        print("4.创建网站应用程序")
+        print("5.删除网站")
+        print("6.删除网站应用程序")
+        print("7.启动应用程序池")
+        print("8.停止应用程序池")
+        print("9.启用网站")
+        print("10.停止网站")
+        print("11.备份IIS")
+        print("12.恢复IIS")
+        print("13.打开IIS管理器")
+        print("0.退出程序")
+        print("=" * 30)
+        
+    def choiceDo(self,choice)->bool:
+        match(choice):
+            case 1:
+                print("👉创建应用程序池[2]：")
+                poolName=input("1.应用程序池名称：")
+                if poolName:
+                    runtimeVersion=input("2..NET CLR版本（空为无托管代码）：")
+                    self.createAppPool(poolName,runtimeVersion)
+                else:
+                    print("您已放弃：未输入正确的应用程序池名称。")
+                return True
+            case 2:
+                print("👉删除应用程序池[1]：")
+                poolName=input("1.应用程序池名称：")
+                if poolName:
+                    self.deleteAppPool(poolName)
+                else:
+                    print("您已放弃：未输入正确的应用程序池名称。")
+                return True
+            case 3:
+                print("👉创建网站[5]：")
+                siteName=input("1.网站名称：")
+                if siteName:
+                    physicalPath=input("2.物理路径（绝对路径）：")
+                    if physicalPath:
+                        port=convertStr2Int(input("3.端口号："))
+                        if port > 80:
+                            hostNmae=input("4.域名（可选）：")
+                            poolName=input("5.应用程序池名称（可选，空为默认池）：")
+                            self.createWebsite(siteName,physicalPath,port,hostNmae,poolName)
+                        else:
+                            print("您已放弃：未输入正确的端口号。")
+                    else:
+                        print("您已放弃：未输入正确的物理路径。")
+                else:
+                    print("您已放弃：未输入正确的网站名称。")
+                return True
+            case 4:
+                print("👉创建网站应用程序[4]：")
+                siteName=input("1.网站名称：")
+                if siteName:
+                    appPath=input("2.应用程序名称（如/myapp）：")
+                    if appPath:
+                        physicalPath=input("3.物理路径（绝对路径）：")
+                        if physicalPath:
+                            poolName=input("4.应用程序池名称（可选，空为默认池）：")
+                            self.createWebsiteApp(siteName,appPath,physicalPath,poolName)
+                        else:
+                            print("您已放弃：未输入正确的物理路径。")
+                    else:
+                        print("您已放弃：未输入正确的应用程序名称。")
+                else:
+                    print("您已放弃：未输入正确的网站名称。")
+                return True
+            case 5:
+                print("👉删除网站[1]：")
+                siteName=input("1.网站名称：")
+                if siteName:
+                    self.deleteWebsite(siteName)
+                else:
+                    print("您已放弃：未输入正确的网站名称。")
+                return True
+            case 6:
+                print("👉删除网站应用程序[2]：")
+                siteName=input("1.网站名称：")
+                if siteName:
+                    appPath=input("2.应用程序名称（如/myapp）：")
+                    if appPath:
+                        self.deleteWebsiteApplication(siteName,appPath)
+                    else:
+                        print("您已放弃：未输入正确的应用程序名称。")
+                else:
+                    print("您已放弃：未输入正确的网站名称。")
+                return True
+            case 7:
+                print("👉启动应用程序池[1]：")
+                poolName=input("1.应用程序池名称：")
+                if poolName:
+                    self.startAppPool(poolName)
+                else:
+                    print("您已放弃：未输入正确的应用程序池名称。")
+                return True
+            case 8:
+                print("👉停止应用程序池[1]：")
+                poolName=input("1.应用程序池名称：")
+                if poolName:
+                    self.stopAppPool(poolName)
+                else:
+                    print("您已放弃：未输入正确的应用程序池名称。")
+                return True
+            case 9:
+                print("👉启动网站[1]：")
+                siteName=input("1.网站名称：")
+                if siteName:
+                    self.startWebsite(siteName)
+                else:
+                    print("您已放弃：未输入正确的网站名称。")
+                return True
+            case 10:
+                print("👉停止网站[1]：")
+                siteName=input("1.网站名称：")
+                if siteName:
+                    self.stopWebsite(siteName)
+                else:
+                    print("您已放弃：未输入正确的网站名称。")
+                return True
+            case 11:
+                print("👉备份IIS[1]：")
+                backupName=input("1.备份名称：")
+                if backupName:
+                    self.backupIIS(backupName)
+                else:
+                    print("您已放弃：未输入正确的备份名称。")
+                return True
+            case 12:
+                print("👉恢复IIS[1]：")
+                backupName=input("1.备份名称：")
+                if backupName:
+                    self.restoreIIS(backupName)
+                else:
+                    print("您已放弃：未输入正确的备份名称。")
+                return True
+            case 13:
+                print("👉打开IIS管理器[0]：")
+                self.openIIS()
+                return True
+            case 0:
+                return False
+            case _:
+                return True
+
+    def choiceMenu(self):
+        print("333")
+        running = True
+        while running:
+            self.showMenu()
+            try:
+                user_input = input("请输入您的选择（数字）: ")
+                choice = int(user_input)
+                running = self.choiceDo(choice)
+            except ValueError:
+                print("\n>> 错误：输入无效，请输入数字！")
+                input(">> 按回车键继续...")

@@ -70,7 +70,8 @@ def main() -> None:
     parser.add_argument("subcommands", nargs="?", default=None, choices=["create","attach","fujia","detach","fenli","backup","backupall","restore", 
         "dellog","clearnull","drop","runsql","runsqlfile","createapppool","deleteapppool","createwebsite","createwebsiteapp",
         "deletewebsite","deletewebsiteapp","checkapppool","checkwebsite","checkwebsiteapp","startapppool","stopapppool","startwebsite",
-        "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis","open"], help="Subcommands")
+        "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis","open",
+        "choice","menu"], help="Subcommands")
     # 常规参数
     parser.add_argument('-v', '--version', action='store_true', help='显示版本号')
     parser.add_argument('-d', '--deviceinfos', action='store_true', help='显示设备信息')
@@ -79,7 +80,7 @@ def main() -> None:
     parser.add_argument("-PT", "--port", default=1433, type=int, help="端口号，默认1433")
     parser.add_argument("-U", "--user", default="sa", type=str, help="用户，默认sa")
     parser.add_argument("-P", "--password", default="", type=str, help="密码")
-    parser.add_argument("-D", "--database", default="", type=str, help="数据库")
+    parser.add_argument("-D", "--database", default="master", type=str, help="数据库")
     parser.add_argument("--file", default="", type=str, help="文件名（绝对路径）")
     parser.add_argument("-mdf", "--mdffile", default="", type=str, help="数据文件")
     parser.add_argument("-ldf", "--ldffile", default="", type=str, help="日志文件")
@@ -157,6 +158,10 @@ def main() -> None:
                         # 打开SSMS
                         # pylhb mssql open
                         mssql.openSSMS()
+                    case "choice" | "menu":
+                        # 打开菜单选择操作
+                        # pylhb mssql choice
+                        mssql.choiceMenu()
             case "iis":
                 iis=IISDo()
                 match args.subcommands:
@@ -244,7 +249,10 @@ def main() -> None:
                         # 打开IIS管理器
                         # pylhb iis open
                         iis.openIIS()
-                        
+                    case "choice" | "menu":
+                        # 打开菜单选择操作
+                        # pylhb iis choice
+                        iis.choiceMenu()
     else:
         # show version
         if args.version:
