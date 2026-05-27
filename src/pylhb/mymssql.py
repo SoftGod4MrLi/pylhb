@@ -405,6 +405,41 @@ class MyMSSQL:
             return (True,"OK")
         except Exception as e:
             return (False,str(e))
+
+    async def exists4Async(self,sql):
+        """
+        异步检查是否存在
+        Args:
+            sql：SQL语句
+        Returns:
+            是否成功
+            执行结果
+            是否存在
+        """
+        return await self.loop.run_in_executor(
+            self.executor, 
+            self.exists,
+            sql
+        )
+            
+    def exists(self,sql):
+        """
+        检查是否存在
+        Args:
+            sql：SQL语句
+        Returns:
+            是否成功
+            执行结果
+            是否存在
+        """
+        if not self.conn:
+            return False,"未连接数据库。",False
+        try:
+            self.cursor.execute(sql)
+            exists = self.cursor.fetchone()[0] > 0
+            return True,"OK",exists
+        except Exception as e:
+            return False,str(e),False
             
     async def select4Async(self, tableName, columns: tuple[str] = None, where=None, params: tuple[any]=None,toDict=True):
         """
