@@ -1,7 +1,7 @@
 import argparse
 import platform
 # Base
-from .lhb import showVersion,showDeviceInfos,MyMSSQLDo,IISDo
+from .lhb import showVersion,showDeviceInfos,MyMSSQLDo,IISDo,Dlowload
 # Mr.Lee's Module
 from .myini import MyINI
 from .myjson import MyJSON
@@ -66,12 +66,12 @@ __all__.append([
 def main() -> None:
     parser = argparse.ArgumentParser(description="Mr.Lee's Helpers")
     # 位置参数
-    parser.add_argument("commands", nargs="?", default=None, choices=["mssql", "iis"], help="Commands")
+    parser.add_argument("commands", nargs="?", default=None, choices=["mssql", "iis", "download"], help="Commands")
     parser.add_argument("subcommands", nargs="?", default=None, choices=["create","attach","fujia","detach","fenli","backup","backupall","restore", 
         "dellog","clearnull","drop","runsql","runsqlfile","createapppool","deleteapppool","createwebsite","createwebsiteapp",
         "deletewebsite","deletewebsiteapp","checkapppool","checkwebsite","checkwebsiteapp","startapppool","stopapppool","startwebsite",
         "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis","open",
-        "choice","menu"], help="Subcommands")
+        "choice","menu","help"], help="Subcommands")
     # 常规参数
     parser.add_argument('-v', '--version', action='store_true', help='显示版本号')
     parser.add_argument('-d', '--deviceinfos', action='store_true', help='显示设备信息')
@@ -125,7 +125,7 @@ def main() -> None:
                         mssql.backup(args.file)
                     case "backupall":
                         # 备份所有数据库
-                        # pylhb mssql backupall -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\name.bak
+                        # pylhb mssql backupall -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\bkfile.bak
                         mssql.backupall(args.file)
                     case "restore":
                         # 恢复数据库
@@ -161,7 +161,12 @@ def main() -> None:
                     case "choice" | "menu":
                         # 打开菜单选择操作
                         # pylhb mssql choice
+                        # pylhb mssql menu
                         mssql.choiceMenu()
+                    case "help":
+                        # 打开帮助
+                        # pylhb mssql help
+                        mssql.help()
             case "iis":
                 iis=IISDo()
                 match args.subcommands:
@@ -252,7 +257,24 @@ def main() -> None:
                     case "choice" | "menu":
                         # 打开菜单选择操作
                         # pylhb iis choice
+                        # pylhb iis menu
                         iis.choiceMenu()
+                    case "help":
+                        # 打开帮助
+                        # pylhb iis help
+                        iis.help()
+            case "download":
+                download=Dlowload()
+                match args.subcommands:
+                    case "choice" | "menu":
+                        # 打开菜单选择操作
+                        # pylhb download choice
+                        # pylhb download menu
+                        download.choiceMenu()
+                    case "help":
+                        # 打开帮助
+                        # pylhb download help
+                        download.help()
     else:
         # show version
         if args.version:

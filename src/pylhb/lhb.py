@@ -11,6 +11,7 @@ from .mymssql import MyMSSQL
 from .myiis import MyIIS
 import subprocess
 import getpass
+import webbrowser
 
 def showVersion():
     """显示版本号"""
@@ -401,6 +402,7 @@ class MyMSSQLDo:
                     self.backupall(fileFullName)
                 else:
                     print("您已放弃：未输入正确的备份文件名。")
+                return True
             case 6:
                 print("👉恢复数据库[2]：")
                 self.database=input("1.数据库名称：")
@@ -479,6 +481,53 @@ class MyMSSQLDo:
                     print("\n>> 错误：输入无效，请输入数字！")
                     input(">> 按回车键继续...")
 
+    def help(self):
+        print("欢迎使用pylhb mssql命令")
+        print("通用参数：")
+        print("  -S/--server：服务器名称")
+        print("  -P/--port：端口号")
+        print("  -U/--user：用户名")
+        print("  -P/--password：密码")
+        print("  -D/--database：数据库")
+        print("1.创建数据库")
+        print("  A.mdf：数据文件")
+        print("  B.ldf：日志文件")
+        print("  如：pylhb mssql create -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test -mdf D:\\dd\\test.mdf -ldf D:\\dd\\test_log.ldf")
+        print("2.附加数据库")
+        print("  A.mdf：数据文件")
+        print("  B.ldf：日志文件")
+        print("  如：pylhb mssql attach -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test -mdf D:\\dd\\test.mdf -ldf D:\\dd\\test_log.ldf")
+        print("  如：pylhb mssql fujia -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test -mdf D:\\dd\\test.mdf -ldf D:\\dd\\test_log.ldf")
+        print("3.分离数据库")
+        print("  如：pylhb mssql detach -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test")
+        print("  如：pylhb mssql fenli -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test")
+        print("4.备份数据库")
+        print("  A.file：备份文件（绝对路径）")
+        print("  如：pylhb mssql backup -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\bkfile.bak")
+        print("5.备份所有数据库")
+        print("  A.file：备份文件（绝对路径），也可以是路径。")
+        print("  如：pylhb mssql backupall -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\bkfile.bak")
+        print("6.恢复数据库")
+        print("  A.file：备份文件（绝对路径）")
+        print("  如：pylhb mssql restore -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\bkfile.bak")
+        print("7.删除日志")
+        print("  如：pylhb mssql dellog -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer")
+        print("8.清除null")
+        print("  如：pylhb mssql clearnull -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer")
+        print("9.删除数据库")
+        print("  force：强制（必带）")
+        print("  如：pylhb mssql drop -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test --force")
+        print("10.执行SQL脚本")
+        print("  A.sql：SQL脚本")
+        print("  如：pylhb mssql runsql -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --sql “SELECT * FROM Dt_Users”")
+        print("11.执行SQL文件")
+        print("  A.file：SQL文件")
+        print("  如：pylhb mssql runsqlfile -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\test.sql")
+        print("12.打开SSMS")
+        print("  如：pylhb mssql open")
+        print("13.打开菜单操作模式")
+        print("  如：pylhb mssql menu")
+        
 class IISDo:
     """IIS处理"""
     def createAppPool(self,poolName, runtimeVersion:str=None, enable32bit=False):
@@ -1020,6 +1069,7 @@ class IISDo:
                 return True
             case 12:
                 print("👉恢复IIS[1]：")
+                print(r"注意：请先将路径复制到文件夹（C:\Windows\System32\inetsrv\backup）下。")
                 backupName=input("1.备份名称：")
                 if backupName:
                     self.restoreIIS(backupName)
@@ -1036,7 +1086,6 @@ class IISDo:
                 return True
 
     def choiceMenu(self):
-        print("333")
         running = True
         while running:
             self.showMenu()
@@ -1047,3 +1096,175 @@ class IISDo:
             except ValueError:
                 print("\n>> 错误：输入无效，请输入数字！")
                 input(">> 按回车键继续...")
+
+    def help(self):
+        print("欢迎使用pylhb iis命令")
+        print("1.创建应用程序池")
+        print("  A.poolname：应用程序池名称")
+        print("  B.runtime：CTL版本（空表示无托管代码），默认为空。")
+        print("  C.start32：是否启用32位应用程序，默认为False。")
+        print("  如：pylhb iis createapppool --poolname MyPool")
+        print("2.删除应用程序池")
+        print("  A.poolname：应用程序池名称")
+        print("  如：pylhb iis deleteapppool --poolname MyPool")
+        print("3.创建网站")
+        print("  A.sitename：网站名称")
+        print("  B.physicalpath：物理路径")
+        print("  C.port：端口号")
+        print("  D.hostname：域名")
+        print("  E.poolname：应用程序池")
+        print("  如：pylhb iis createwebsite --sitename MyWebsite --path D:\\dd --port 88 --poolname MyPool")
+        print("4.创建网站下的应用程序")
+        print("  A.sitename：网站名称")
+        print("  B.apppath：应用程序路径")
+        print("  C.physicalpath：物理路径")
+        print("  D.poolname：应用程序池")
+        print("  如：pylhb iis createwebsiteapp --sitename MyWebsite --apppath /webapi --path D:\\dd --poolname MyPool")
+        print("5.删除网站")
+        print("  A.sitename：网站名称")
+        print("  如：pylhb iis deletewebsite --sitename MyWebsite")
+        print("6.删除网站下的应用程序")
+        print("  A.sitename：网站名称")
+        print("  b.apppath：应用程序路径")
+        print("  如：pylhb iis deletewebsiteapp --sitename MyWebsite --apppath /webapi")
+        print("7.检查应用程序池是否存在")
+        print("  A.poolname：应用程序池名称")
+        print("  如：pylhb iis checkapppool  --poolname MyPool")
+        print("8.检查网站是否存在")
+        print("  A.sitename：网站名称")
+        print("  如：pylhb iis checkapppool  --sitename MyWebsite")
+        print("9.检查网站下在应用是否存在")
+        print("  A.sitename：网站名称")
+        print("  b.apppath：应用程序路径")
+        print("  如：pylhb iis checkwebsiteapp  --sitename MyWebsite --apppath /webapi")
+        print("10.启动应用程序池")
+        print("  A.poolname：应用程序池名称")
+        print("  如：pylhb iis startapppool  --poolname MyPool")
+        print("11.停止应用程序池")
+        print("  A.poolname：应用程序池名称")
+        print("  如：pylhb iis stopapppool  --poolname MyPool")
+        print("12.启动网站")
+        print("  A.sitename：网站名称")
+        print("  如：pylhb iis startwebsite  --sitename MyWebsite")
+        print("13.停止网站")
+        print("  A.sitename：网站名称")
+        print("  如：pylhb iis stopwebsite  --sitename MyWebsite")
+        print("14.获取应用程序池状态")
+        print("  A.poolname：应用程序池名称")
+        print("  如：pylhb iis getapppoolstate  --poolname MyPool")
+        print("15.获取网站状态")
+        print("  A.sitename：网站名称")
+        print("  如：pylhb iis getwebsitestate  --sitename MyWebsite")
+        print("16.获取应用程序池列表")
+        print("  如：pylhb iis getapppoollist")
+        print("17.获取网站列表")
+        print("  如：pylhb iis getwebsitelist")
+        print("18.备份IIS")
+        print("  A.backupname：备份名称")
+        print("  如：pylhb iis backupiis --backupname bk2026")
+        print("18.恢复IIS")
+        print("  A.backupname：备份名称")
+        print("  如：pylhb iis restoreiis --backupname bk2026")
+        print(r"  注意：要把以前备份的复制到（C:\Windows\System32\inetsrv\backup）下")
+        print("19.打开IIS管理器")
+        print("  如：pylhb iis open")
+        print("20.打开菜单操作模式")
+        print("  如：pylhb iis menu")
+
+class Dlowload:
+    def __init__(self) -> None:
+        pass
+
+    def showMenu(self):
+        print("\n" + "=" * 30)
+        print("🌺🌺系统菜单🌺🌺")
+        print("=" * 30)
+        print("1. 微信")
+        print("2. TIM")
+        print("3. 微信web开发者工具")
+        print("4. Node.js")
+        print("5. Git")
+        print("6. Zed")
+        print("7. .Net")
+        print("8. Python 3.12.9")
+        print("9. Notepad3")
+        print("10. DaVinci")
+        print("88. 所有")
+        print("0. 退出程序")
+        print("=" * 30)
+        
+    def choiceMenu(self):
+        running = True
+        while running:
+            self.showMenu()
+            try:
+                user_input = input("请输入您的选择（数字）: ")
+                choice = int(user_input)
+                running = self.choiceDo(choice)
+            except ValueError:
+                print("\n>> 错误：输入无效，请输入数字！")
+                input(">> 按回车键继续...")
+                
+    def choiceDo(self,choice):
+        match(choice):
+            case 1:
+                webbrowser.open("https://pc.qq.com/search.html#!keyword=%E5%BE%AE%E4%BF%A1")
+                return True
+            case 2:
+                webbrowser.open("https://pc.qq.com/search.html#!keyword=TIM")
+                return True
+            case 3:
+                webbrowser.open("https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html")
+                return True
+            case 4:
+                webbrowser.open("https://nodejs.org/zh-cn")
+                return True
+            case 5:
+                webbrowser.open("https://git-scm.com/install/windows")
+                return True
+            case 6:
+                webbrowser.open("https://zed.dev/download")
+                return True
+            case 7:
+                webbrowser.open("https://zed.dev/download")
+                return True
+            case 8:
+                webbrowser.open("https://www.python.org/downloads/release/python-3129/")
+                return True
+            case 9:
+                webbrowser.open("https://rizonesoft.com/downloads/notepad3/")
+                return True
+            case 10:
+                webbrowser.open("http://www.blackmagicdesign.com/products/davinciresolve")
+                return True
+            case 88:
+                # 微信
+                webbrowser.open("https://pc.qq.com/search.html#!keyword=%E5%BE%AE%E4%BF%A1")
+                # TIM
+                webbrowser.open("https://pc.qq.com/search.html#!keyword=TIM")
+                # 微信web开发者工具
+                webbrowser.open("https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html")
+                # Node.js
+                webbrowser.open("https://nodejs.org/zh-cn")
+                # Git
+                webbrowser.open("https://git-scm.com/install/windows")
+                # Zed
+                webbrowser.open("https://zed.dev/download")
+                # .Net
+                webbrowser.open("https://dotnet.microsoft.com/zh-cn/download")
+                # Python 3.12.9
+                webbrowser.open("https://www.python.org/downloads/release/python-3129/")
+                # Notepad3
+                webbrowser.open("https://rizonesoft.com/downloads/notepad3/")
+                # DaVinci
+                webbrowser.open("http://www.blackmagicdesign.com/products/davinciresolve")
+                return True
+            case 0:
+                return False
+            case _:
+                return True
+
+    def help(self):
+        print("欢迎使用pylhb download命令")
+        print("1.打开菜单操作模式")
+        print("  如：pylhb download menu")
