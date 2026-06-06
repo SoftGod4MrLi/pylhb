@@ -7,146 +7,234 @@
 [![GitHub forks](https://img.shields.io/github/forks/SoftGod4MrLi/pylhb?style=flat&logo=github)](https://github.com/SoftGod4MrLi/pylhb)
 
 pylhb 是我在工作过程中陆续整理的一个 Python 工具包，里面放了一些自己反复用到的模块和函数。与其说是一个正式的开源项目，不如说是我自己的“代码杂物间”——只不过把它打包了一下，方便在不同项目之间复用。
+
 > 由于是个人使用为主，很多设计可能带着比较强的个人习惯，也未必是最优解。如果您发现了问题或有更好的建议，非常欢迎指正。
 
 ## 安装
+
 ```
 pip install pylhb
 ```
 
 ## 🌺命令
+
 ### Microsoft SQL Server命令：
+
 - 创建数据库
+
 ```
 pylhb mssql create -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test -mdf D:\\dd\\test.mdf -ldf D:\\dd\\test_log.ldf
 ```
+
 - 附加数据库
+
 ```
 pylhb mssql attach -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test -mdf D:\\dd\\test.mdf -ldf D:\\dd\\test_log.ldf
 pylhb mssql fujia -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test -mdf D:\\dd\\test.mdf -ldf D:\\dd\\test_log.ldf
 ```
+
 - 分离数据库
+
 ```
 pylhb mssql detach -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test
 pylhb mssql fenli -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test
 ```
+
 - 备份数据库
+
 ```
 pylhb mssql backup -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\bkfile.bak
 ```
+
 - 备份所有数据库
+
 ```
 pylhb mssql backupall -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\name.bak
 ```
+
 - 恢复数据库
+
 ```
 pylhb mssql restore -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\bkfile.bak
 ```
+
 - 清除日志
+
 ```
 pylhb mssql dellog -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer
 ```
+
 - 清除null
+
 ```
 pylhb mssql clearnull -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer
 ```
+
 - 删除数据库
+
 ```
 pylhb mssql drop -S localhost\\sqlexpress -U sa -P fpsoft@123 -D test --force
 ```
+
 - 执行SQL脚本
+
 ```
 pylhb mssql runsql -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --sql “SELECT * FROM Dt_Users”
 ```
+
 - 执行SQL文件
+
 ```
 pylhb mssql runsqlfile -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\test.sql
 ```
+
 - 打开SSMS
+
 ```
 pylhb mssql open
 ```
+
+- 打开菜单
+
+```
+pylhb mssql menu
+```
+
 ### IIS命令：
+
 - 创建应用程序池
+
 ```
 pylhb iis createapppool --poolname MyPool
 pylhb iis createapppool --poolname MyPool --runtime v4.0 --start32
 ```
+
 - 删除应用程序池
+
 ```
 pylhb iis deleteapppool --poolname MyPool
 ```
+
 - 创建网站
+
 ```
 pylhb iis createwebsite --sitename MyWebsite --path D:\\dd --port 88 --poolname MyPool
 ```
+
 - 创建网站下的应用
+
 ```
 pylhb iis createwebsiteapp --sitename MyWebsite --apppath /webapi --path D:\\dd --poolname MyPool
 ```
+
 - 删除网站
+
 ```
 pylhb iis deletewebsite --sitename MyWebsite
 ```
+
 - 删除网站应用
+
 ```
 pylhb iis deletewebsiteapp --sitename MyWebsite --apppath /webapi
 ```
+
 - 检查应用程序池是否存在
+
 ```
 pylhb iis checkapppool  --poolname MyPool
 ```
+
 - 检查网站是否存在
+
 ```
 pylhb iis checkwebsite  --sitename MyWebsite
 ```
+
 - 检查网站下在应用是否存在
+
 ```
 pylhb iis checkwebsiteapp  --sitename MyWebsite --apppath /webapi
 ```
+
 - 启动应用程序池
+
 ```
 pylhb iis startapppool  --poolname MyPool
 ```
+
 - 停止应用程序池
+
 ```
 pylhb iis stopapppool  --poolname MyPool
 ```
+
 - 启动网站
+
 ```
 pylhb iis startwebsite  --sitename MyWebsite
 ```
+
 - 停止网站
+
 ```
 pylhb iis stopwebsite  --sitename MyWebsite
 ```
+
 - 获取应用程序池状态
+
 ```
 pylhb iis getapppoolstate  --poolname MyPool
 ```
+
 - 获取网站状态
+
 ```
 pylhb iis getwebsitestate  --sitename MyWebsite
 ```
+
 - 获取应用程序池列表
+
 ```
 pylhb iis getapppoollist
 ```
+
 - 获取网站列表
+
 ```
 pylhb iis getwebsitelist
 ```
+
 - 备份IIS
+
 ```
 pylhb iis backupiis --backupname bk2026
 ```
+
 - 恢复IIS
+
 ```
 pylhb iis restoreiis --backupname bk2026
 ```
+
 - 打开IIS管理器
+
 ```
 pylhb iis open
+```
+
+- 打开菜单
+
+```
+pylhb iis menu
+```
+
+### Download命令：
+
+- 打开菜单
+
+```
+pylhb download menu
 ```
 
 ## 🌺mymssql模块
