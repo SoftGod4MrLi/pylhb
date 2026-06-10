@@ -9,6 +9,7 @@ from .mydevice import MyDevice
 from .myspinner import SpinnerStyle,MySpinner
 from .mymssql import MyMSSQL
 from .myiis import MyIIS
+from .mymssqlsync import MyMSSQLSync
 import subprocess
 import getpass
 import webbrowser
@@ -296,6 +297,32 @@ class MyMSSQLDo:
         except Exception as e:
             sp.stop(f"执行失败：{e}",False)
 
+    def doCompareSync(self,targetServer,targetPort,targerUser,targetPassword,targetDataBase,targetTrusted,comparetoFile,file):
+        try:
+            mssqlSource=MyMSSQL(server=self.server,port=self.port,user=self.user,password=self.password,database=self.database,trusted=self.trusted)
+            (successedSource,msg)=mssqlSource.connect()
+            if not successedSource:
+                print(f"源数据库连接失败：{msg}")
+                return
+            mssqlTarget=MyMSSQL(server=targetServer,port=targetPort, user=targerUser,password=targetPassword,database=targetDataBase,trusted=targetTrusted)
+            (successedTarget,msg)=mssqlTarget.connect()
+            if not successedTarget:
+                print(f"目标数据库连接失败：{msg}")
+                return
+            mssqlSync = MyMSSQLSync(mssqlSource,mssqlTarget)
+            if comparetoFile:
+                (listSQL,listError)=mssqlSync.getSyncSQL()
+                mssqlSync.saveToFile(listSQL,file)
+            else:
+                mssqlSync.goSync()
+            #关闭
+            if successedSource:
+                mssqlSource.close()
+            if successedTarget:
+                mssqlTarget.close()
+        except Exception as e:
+            print(f"同步异常：{e}")
+
     def intputBase(self) -> bool:
         try:
             print("配置基础参数[6]：")
@@ -342,7 +369,8 @@ class MyMSSQLDo:
         print("8.清除NULL")
         print("9.执行SQL")
         print("10.执行SQL文件")
-        print("11.打开SSMS")
+        print("11.架构对比（即对比更新）")
+        print("12.打开SSMS")
         print("0.退出程序")
         print("=" * 30)
         
@@ -459,6 +487,55 @@ class MyMSSQLDo:
                     print("您已放弃：未输入正确的数据库名称。")
                 return True
             case 11:
+                print("👉架构对比（对比更新）[10]：")
+                sourceDataBase=input("1.源数据库名称：")
+                if sourceDataBase:
+                    self.database=sourceDataBase
+                    targetServer=input("2.目标服务器名称（默认为127.0.0.1）: ")
+                    if not targetServer:
+                        targetServer="127.0.0.1"
+                    targetPort=convertStr2Int(input("3.目标端口号（默认1433）："),1433)
+                    if targetPort==0:
+                        self.port=1433
+                    targetUser=input("4.目标用户（默认sa）：")
+                    if not targetUser:
+                        targetUser="sa"
+        
+                    useMW=input("5.目标使用明文密码（Y/N，默认N）：")
+                    if not useMW:
+                        useMW="N"
+                    if useMW.upper()=="Y":
+                        targetPassword=input("6.目标密码：")
+                    else:
+                        targetPassword=getpass.getpass("6.目标密码：")
+    
+                    targetDataBase=input("7.目标数据库：")
+                    if targetDataBase:
+                        targetTrust=input("8.目标用Windows身份验证（Y/N，默认N）：")
+                        if not targetTrust:
+                            targetTrust="N"
+                        if targetTrust.upper()=="Y":
+                            targetTrusted=True
+                        else:
+                            targetTrusted=False
+        
+                        targetCompareToFile=input("9.对比到文件（Y/N，默认N）：")
+                        if not targetCompareToFile:
+                            targetCompareToFile="N"
+                        if targetCompareToFile.upper()=="Y":
+                            targetFile=input("10.文件名：")
+                            if targetFile:
+                                self.doCompareSync(targetServer,targetPort,targetUser,targetPassword,targetDataBase,targetTrusted,True,targetFile)
+                            else:
+                                print("您已放弃：未输入正确目标到文件时的文件名。")
+                        else:
+                            self.doCompareSync(targetServer,targetPort,targetUser,targetPassword,targetDataBase,targetTrusted,False,"")
+                    else:
+                        print("您已放弃：未输入正确的目标数据库名称。")
+                else:
+                    print("您已放弃：未输入正确的源数据库名称。")
+                return True
+            case 12:
                 print("👉执行SSMS[0]：")
                 self.openSSMS()
                 return True
@@ -1186,7 +1263,7 @@ class Dlowload:
         print("5. Git")
         print("6. Zed")
         print("7. .Net")
-        print("8. Python 3.12.9")
+        print("8. Python")
         print("9. Notepad3")
         print("10. DaVinci")
         print("88. 所有")
@@ -1226,10 +1303,10 @@ class Dlowload:
                 webbrowser.open("https://zed.dev/download")
                 return True
             case 7:
-                webbrowser.open("https://zed.dev/download")
+                webbrowser.open("https://dotnet.microsoft.com/zh-cn/download")
                 return True
             case 8:
-                webbrowser.open("https://www.python.org/downloads/release/python-3129/")
+                webbrowser.open("https://www.python.org/downloads/")
                 return True
             case 9:
                 webbrowser.open("https://rizonesoft.com/downloads/notepad3/")
@@ -1252,8 +1329,8 @@ class Dlowload:
                 webbrowser.open("https://zed.dev/download")
                 # .Net
                 webbrowser.open("https://dotnet.microsoft.com/zh-cn/download")
-                # Python 3.12.9
-                webbrowser.open("https://www.python.org/downloads/release/python-3129/")
+                # Python
+                webbrowser.open("https://www.python.org/downloads/")
                 # Notepad3
                 webbrowser.open("https://rizonesoft.com/downloads/notepad3/")
                 # DaVinci

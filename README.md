@@ -88,6 +88,13 @@ pylhb mssql runsql -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --
 pylhb mssql runsqlfile -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\test.sql
 ```
 
+- 架构对比（即对比更新）
+
+```
+pylhb mssql compare -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer -TS localhost\\sqlexpress -TU sa -TP fpsoft@123 -TD Test
+pylhb mssql compare -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer -TS localhost\\sqlexpress -TU sa -TP fpsoft@123 -TD Test--comparetofile --file D:\\dd\\bkfile.bak
+```
+
 - 打开SSMS
 
 ```

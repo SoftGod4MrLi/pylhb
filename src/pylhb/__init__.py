@@ -71,21 +71,29 @@ def main() -> None:
         "dellog","clearnull","drop","runsql","runsqlfile","createapppool","deleteapppool","createwebsite","createwebsiteapp",
         "deletewebsite","deletewebsiteapp","checkapppool","checkwebsite","checkwebsiteapp","startapppool","stopapppool","startwebsite",
         "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis","open",
-        "choice","menu","help"], help="Subcommands")
+        "compare","choice","menu","help"], help="Subcommands")
     # 常规参数
     parser.add_argument('-v', '--version', action='store_true', help='显示版本号')
     parser.add_argument('-d', '--deviceinfos', action='store_true', help='显示设备信息')
     # mssql参数
-    parser.add_argument("-S", "--server", default="127.0.0.1", type=str, help="服务器名称，默认127.0.0.1")
-    parser.add_argument("-PT", "--port", default=1433, type=int, help="端口号，默认1433")
-    parser.add_argument("-U", "--user", default="sa", type=str, help="用户，默认sa")
-    parser.add_argument("-P", "--password", default="", type=str, help="密码")
-    parser.add_argument("-D", "--database", default="master", type=str, help="数据库")
+    parser.add_argument("-S", "--server", default="127.0.0.1", type=str, help="（源）服务器名称，默认127.0.0.1")
+    parser.add_argument("-PT", "--port", default=1433, type=int, help="（源）端口号，默认1433")
+    parser.add_argument("-U", "--user", default="sa", type=str, help="（源）用户，默认sa")
+    parser.add_argument("-P", "--password", default="", type=str, help="（源）密码")
+    parser.add_argument("-D", "--database", default="master", type=str, help="（源）数据库")
     parser.add_argument("--file", default="", type=str, help="文件名（绝对路径）")
     parser.add_argument("-mdf", "--mdffile", default="", type=str, help="数据文件")
     parser.add_argument("-ldf", "--ldffile", default="", type=str, help="日志文件")
     parser.add_argument("--force", action='store_true', help='强制，删除数据库必须带上')
     parser.add_argument("--trusted", action='store_true', help='信任（Windows身份登录)')
+    # 目标mssql参数-仅限架构对比时才用到
+    parser.add_argument("-TS", "--targetserver", default="127.0.0.1", type=str, help="（目标）服务器名称，默认127.0.0.1")
+    parser.add_argument("-TPT", "--targetport", default=1433, type=int, help="（目标）端口号，默认1433")
+    parser.add_argument("-TU", "--targetuser", default="sa", type=str, help="（目标）用户，默认sa")
+    parser.add_argument("-TP", "--targetpassword", default="", type=str, help="（目标）密码")
+    parser.add_argument("-TD", "--targetdatabase", default="master", type=str, help="（目标）数据库")
+    parser.add_argument("--targertrusted", action='store_true', help='（目标）信任（Windows身份登录)')
+    parser.add_argument("--comparetofile", action='store_true', help='对比生成更新脚本到文件')
     # IIS参数
     parser.add_argument("--poolname", default="", type=str, help="应用程序池名")
     parser.add_argument("--runtime", default="", type=str, help=".NET CLR版本，如'v4.0'，空字符串表示'无托管代码'")
@@ -154,6 +162,11 @@ def main() -> None:
                         # 执行SQL文件
                         # pylhb mssql runsqlfile -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer --file D:\\dd\\test.sql
                         mssql.runSQLFile(args.file,args.usesqlcmd)
+                    case "compare":
+                        # 架构比较（即对比更新）
+                        # pylhb mssql compare -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer -TS localhost\\sqlexpress -TU sa -TP fpsoft@123 -TD Test
+                        # pylhb mssql compare -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer -TS localhost\\sqlexpress -TU sa -TP fpsoft@123 -TD Test--comparetofile --file D:\\dd\\bkfile.bak
+                        mssql.doCompareSync(args.targetserver,args.targetport,args.targetuser,args.targetpassword,args.targetdatabase,args.targertrusted,args.comparetofile,args.file)
                     case "open":
                         # 打开SSMS
                         # pylhb mssql open
