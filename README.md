@@ -8,7 +8,9 @@
 
 pylhb 是我在工作过程中陆续整理的一个 Python 工具包，里面放了一些自己反复用到的模块和函数。与其说是一个正式的开源项目，不如说是我自己的“代码杂物间”——只不过把它打包了一下，方便在不同项目之间复用。
 
-> 由于是个人使用为主，很多设计可能带着比较强的个人习惯，也未必是最优解。如果您发现了问题或有更好的建议，非常欢迎指正。
+> 由于是个人使用为主，很多设计可能带着比较强的个人习惯，也未必是最优解。  
+> 如果您发现了问题或有更好的建议，非常欢迎指正。  
+> 申明：操作前请作好备份，本人对所有操作结果拥有所有解释权。
 
 ## 安装
 
@@ -597,3 +599,45 @@ if __name__ == "__main__":
     time.sleep(1)
     spinner2.stop("手动终止成功",showIcon=False)
 ```
+
+## 🌺myaccess模块
+
+Microsoft Access 数据库操作
+
+使用示例：
+
+```
+from pylhb.myaccess import MyAccess
+
+if __name__ == "__main__":
+    db = AccessDB(r"C:\MyDatabase.accdb", password="123456")
+    db.connect()
+    # 查询
+    rows = db.select("SELECT * FROM Employees WHERE Age > ?", (30,))
+
+    db.useTransaction()
+    # 插入数据
+    db.insert("Employees", {
+            "Name": "张三",
+            "Age": 28,
+            "Department": "研发部",
+            "Salary": 8500.00
+        })
+
+    # 更新数据
+    db.update("Employees", {"Department": "IT"}, "Department = ?", ("Support",))
+
+    # 删除数据
+    db.delete("Employees", "EmployeeID = ?", (999,))
+
+    db.commit()
+    db.close()
+```
+
+## 🌺Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=SoftGod4MrLi/pylhb&type=Date)](https://star-history.com/#SoftGod4MrLi/pylhb&Date)
+
+## 🌺License
+
+本项目基于 MIT 许可证开源。MIT 是一种宽松的开源许可证，允许任何人免费使用、修改、分发本软件，包括用于商业用途。详见 [LICENSE](LICENSE) 文件。

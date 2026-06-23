@@ -21,6 +21,7 @@ from .mycodeadd import MyCodeAdd
 from .mycron import MyCron
 from .myre import MyRe
 from .myspinner import SpinnerStyle,MySpinner
+from .myaccess import MyAccess
 
 # 导出列表
 __all__ = []
@@ -60,7 +61,8 @@ __all__.append([
     "MyCron",
     "MyRe",
     "SpinnerStyle",
-    "MySpinner"
+    "MySpinner",
+    "MyAccess"
 ])
 
 def main() -> None:
