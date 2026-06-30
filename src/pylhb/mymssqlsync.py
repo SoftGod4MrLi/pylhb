@@ -66,7 +66,9 @@ class MyMSSQLSync():
             ORDER BY TABLE_NAME
         """
         tables=mssql.get(sql)
-        return [row["TABLE_NAME"] for row in tables]
+        if tables:
+            return [row["TABLE_NAME"] for row in tables]
+        return None
 
     def getTableColumns(self,mssql:MyMSSQL,tableName):
         """
@@ -101,7 +103,9 @@ class MyMSSQLSync():
             ORDER BY c.ORDINAL_POSITION
         """
         tablePrimaryKeys=mssql.get(sql)
-        return [row["COLUMN_NAME"] for row in tablePrimaryKeys]
+        if tablePrimaryKeys:
+            return [row["COLUMN_NAME"] for row in tablePrimaryKeys]
+        return None
 
     def getIndexes(self,mssql:MyMSSQL,tableName):
         """
@@ -122,24 +126,26 @@ class MyMSSQLSync():
         """
         tableIndexes=mssql.get(sql)
         # 遍历索引取索引的列
-        for idx in tableIndexes:
-            idxName=idx["index_name"]
-            sql=f"""
-                SELECT col.name
-                FROM sys.index_columns ic
-                JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id
-                JOIN sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id
-                WHERE i.name = '{idxName}' AND OBJECT_NAME(ic.object_id) = '{tableName}'
-                ORDER BY ic.key_ordinal
-            """
-            indexColumns=mssql.get(sql)
-            cols = [row["name"] for row in indexColumns]
-            indexes.append({
-                "name": idxName,
-                "columns": cols,
-                "unique": idx["is_unique"],
-                "type": idx["index_type"]
-            })
+        if tableIndexes:
+            for idx in tableIndexes:
+                idxName=idx["index_name"]
+                sql=f"""
+                    SELECT col.name
+                    FROM sys.index_columns ic
+                    JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id
+                    JOIN sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+                    WHERE i.name = '{idxName}' AND OBJECT_NAME(ic.object_id) = '{tableName}'
+                    ORDER BY ic.key_ordinal
+                """
+                indexColumns=mssql.get(sql)
+                if indexColumns:
+                    cols = [row["name"] for row in indexColumns]
+                    indexes.append({
+                        "name": idxName,
+                        "columns": cols,
+                        "unique": idx["is_unique"],
+                        "type": idx["index_type"]
+                    })
         return indexes;
 
     def getForeignKeys(self,mssql:MyMSSQL,tableName):
@@ -196,7 +202,9 @@ class MyMSSQLSync():
             """ 
         }
         objects=mssql.get(query_map[objType])
-        return [row["name"] for row in objects]
+        if objects:
+            return [row["name"] for row in objects]
+        return None
 
     def getColumnDefinition(self, col):
         """
@@ -232,22 +240,22 @@ class MyMSSQLSync():
         """生成建表 SQL（含主键）"""
         columns = self.getTableColumns(self.sourceMSSQL, tableName)
         pkCols = self.getPrimaryKeys(self.sourceMSSQL, tableName)
-
-        colSQL = []
-        for col in columns:
-            nullSQL = "NULL" if col["IS_NULLABLE"] == "YES" else "NOT NULL"
-            dt = col["DATA_TYPE"]
-            if dt in ["varchar", "nvarchar", "char"]:
-                size = col["CHARACTER_MAXIMUM_LENGTH"]
-                dt = f"{dt}({size if size != -1 else 'MAX'})"
-            colSQL.append(f"[{col['COLUMN_NAME']}] {dt} {nullSQL}")
-
-        if pkCols:
-            pkSQL = ", ".join([f"[{c}]" for c in pkCols])
-            colSQL.append(f"CONSTRAINT PK_{tableName} PRIMARY KEY ({pkSQL})")
-
-        createSQL = f"CREATE TABLE [{tableName}] (\n  " + ",\n  ".join(colSQL) + "\n)"
-        self.addSQL(createSQL)
+        if columns:
+            colSQL = []
+            for col in columns:
+                nullSQL = "NULL" if col["IS_NULLABLE"] == "YES" else "NOT NULL"
+                dt = col["DATA_TYPE"]
+                if dt in ["varchar", "nvarchar", "char"]:
+                    size = col["CHARACTER_MAXIMUM_LENGTH"]
+                    dt = f"{dt}({size if size != -1 else 'MAX'})"
+                colSQL.append(f"[{col['COLUMN_NAME']}] {dt} {nullSQL}")
+    
+            if pkCols:
+                pkSQL = ", ".join([f"[{c}]" for c in pkCols])
+                colSQL.append(f"CONSTRAINT PK_{tableName} PRIMARY KEY ({pkSQL})")
+    
+            createSQL = f"CREATE TABLE [{tableName}] (\n  " + ",\n  ".join(colSQL) + "\n)"
+            self.addSQL(createSQL)
 
     def syncTableColumns(self,tableName):
         """
@@ -257,21 +265,22 @@ class MyMSSQLSync():
         """
         sourceCols = self.getTableColumns(self.sourceMSSQL, tableName)
         targetCols = self.getTableColumns(self.targetMSSQL, tableName)
-        sourceColsNames = [c["COLUMN_NAME"] for c in sourceCols]
-        targetColsNames = [c["COLUMN_NAME"] for c in targetCols]
-
-        # 删除旧库多余字段
-        if self.deleteExtraColumns:
-            for col in targetCols:
-                if col["COLUMN_NAME"] not in sourceColsNames:
-                    self.addSQL(f"ALTER TABLE [{tableName}] DROP COLUMN [{col['COLUMN_NAME']}]")
-
-        # 新增或修改字段
-        for col in sourceCols:
-            if col["COLUMN_NAME"] not in targetColsNames:
-                nullCond = "NULL" if col["IS_NULLABLE"] == "YES" else "NOT NULL"
-                colType = self.getColumnDefinition(col)
-                self.addSQL(f"ALTER TABLE [{tableName}] ADD [{col['COLUMN_NAME']}] {colType} {nullCond}")
+        if sourceCols and targetCols:
+            sourceColsNames = [c["COLUMN_NAME"] for c in sourceCols]
+            targetColsNames = [c["COLUMN_NAME"] for c in targetCols]
+    
+            # 删除旧库多余字段
+            if self.deleteExtraColumns:
+                for col in targetCols:
+                    if col["COLUMN_NAME"] not in sourceColsNames:
+                        self.addSQL(f"ALTER TABLE [{tableName}] DROP COLUMN [{col['COLUMN_NAME']}]")
+    
+            # 新增或修改字段
+            for col in sourceCols:
+                if col["COLUMN_NAME"] not in targetColsNames:
+                    nullCond = "NULL" if col["IS_NULLABLE"] == "YES" else "NOT NULL"
+                    colType = self.getColumnDefinition(col)
+                    self.addSQL(f"ALTER TABLE [{tableName}] ADD [{col['COLUMN_NAME']}] {colType} {nullCond}")
                 
     def syncTablePrimaryKeys(self,tableName):
         """
@@ -296,18 +305,18 @@ class MyMSSQLSync():
         """
         sourceFKs = self.getForeignKeys(self.sourceMSSQL, tableName)
         targetFKs = self.getForeignKeys(self.targetMSSQL, tableName)
-        targetFKNames = [fk["fk_name"] for fk in targetFKs]
-
-        for fk in sourceFKs:
-            fk_name = fk["fk_name"]
-            if fk_name not in targetFKNames:
-                sql = f"""
-                ALTER TABLE [{fk['parent_table']}] 
-                ADD CONSTRAINT [{fk_name}] 
-                FOREIGN KEY ([{fk['parent_column']}]) 
-                REFERENCES [{fk['ref_table']}] ([{fk['ref_column']}])
-                """
-                self.addSQL(sql)
+        if sourceFKs and targetFKs:
+            targetFKNames = [fk["fk_name"] for fk in targetFKs]
+            for fk in sourceFKs:
+                fk_name = fk["fk_name"]
+                if fk_name not in targetFKNames:
+                    sql = f"""
+                    ALTER TABLE [{fk['parent_table']}] 
+                    ADD CONSTRAINT [{fk_name}] 
+                    FOREIGN KEY ([{fk['parent_column']}]) 
+                    REFERENCES [{fk['ref_table']}] ([{fk['ref_column']}])
+                    """
+                    self.addSQL(sql)
 
     def syncTableIndexes(self,tableName):
         """
@@ -332,28 +341,28 @@ class MyMSSQLSync():
         """
         sourceTables = self.getAllTables(self.sourceMSSQL)
         targetTables = self.getAllTables(self.targetMSSQL)
-
-        # 1.删除旧库多余的表
-        if self.deleteExtraTables:
-            for table in targetTables:
-                if table not in sourceTables:
-                    self.addSQL(f"DROP TABLE IF EXISTS [{table}]")
-        # 2.新增表
-        for table in sourceTables:
-            if table not in targetTables:
-                self.getTableCreateSQL(table)
-        # 3.同步现有表：新增/修改/删除字段 
-        for table in set(sourceTables) & set(targetTables):
-            self.syncTableColumns(table)
-
-        # 同步表的主键/外键/索引
-        for table in sourceTables:
-            if self.syncPrimaryKeys:
-                self.syncTablePrimaryKeys(table)
-            if self.syncTableForeignKeys:
-                self.syncTableForeignKeys(table)
-            if self.syncTableIndexes:
-                self.syncTableIndexes(table)
+        if sourceTables and targetTables:
+            # 1.删除旧库多余的表
+            if self.deleteExtraTables:
+                for table in targetTables:
+                    if table not in sourceTables:
+                        self.addSQL(f"DROP TABLE IF EXISTS [{table}]")
+            # 2.新增表
+            for table in sourceTables:
+                if table not in targetTables:
+                    self.getTableCreateSQL(table)
+            # 3.同步现有表：新增/修改/删除字段 
+            for table in set(sourceTables) & set(targetTables):
+                self.syncTableColumns(table)
+    
+            # 同步表的主键/外键/索引
+            for table in sourceTables:
+                if self.syncPrimaryKeys:
+                    self.syncTablePrimaryKeys(table)
+                if self.syncTableForeignKeys:
+                    self.syncTableForeignKeys(table)
+                if self.syncTableIndexes:
+                    self.syncTableIndexes(table)
 
     def syncAllViews(self):
         """
@@ -361,12 +370,12 @@ class MyMSSQLSync():
         """
         sourceViews = self.getAllObjects(self.sourceMSSQL, "VIEW")
         targetViews = self.getAllObjects(self.targetMSSQL, "VIEW")
-
-        for view in sourceViews:
-            definition = self.getObjectDefinition(self.sourceMSSQL, view)
-            if view in targetViews:
-                self.addSQL(f"DROP VIEW IF EXISTS [{view}]")
-            self.addSQL(definition)
+        if sourceViews and targetViews:
+            for view in sourceViews:
+                definition = self.getObjectDefinition(self.sourceMSSQL, view)
+                if view in targetViews:
+                    self.addSQL(f"DROP VIEW IF EXISTS [{view}]")
+                self.addSQL(definition)
 
     def syncAllFunctions(self):
         """
@@ -374,12 +383,12 @@ class MyMSSQLSync():
         """
         sourceFuncs = self.getAllObjects(self.sourceMSSQL, "FUNCTION")
         targetFuncs = self.getAllObjects(self.targetMSSQL, "FUNCTION")
-
-        for func in sourceFuncs:
-            definition = self.getObjectDefinition(self.sourceMSSQL, func)
-            if func in targetFuncs:
-                self.addSQL(f"DROP FUNCTION IF EXISTS [{func}]")
-            self.addSQL(definition)
+        if sourceFuncs and targetFuncs:
+            for func in sourceFuncs:
+                definition = self.getObjectDefinition(self.sourceMSSQL, func)
+                if func in targetFuncs:
+                    self.addSQL(f"DROP FUNCTION IF EXISTS [{func}]")
+                self.addSQL(definition)
 
     def syncAllProcedures(self):
         """
@@ -387,12 +396,12 @@ class MyMSSQLSync():
         """
         sourceProcs = self.getAllObjects(self.sourceMSSQL, "PROCEDURE")
         targetProcs = self.getAllObjects(self.targetMSSQL, "PROCEDURE")
-
-        for proc in sourceProcs:
-            definition = self.getObjectDefinition(self.sourceMSSQL, proc)
-            if proc in targetProcs:
-                self.addSQL(f"DROP PROCEDURE IF EXISTS [{proc}]")
-            self.addSQL(definition)
+        if sourceProcs and targetProcs:
+            for proc in sourceProcs:
+                definition = self.getObjectDefinition(self.sourceMSSQL, proc)
+                if proc in targetProcs:
+                    self.addSQL(f"DROP PROCEDURE IF EXISTS [{proc}]")
+                self.addSQL(definition)
             
     def syncAllTriggers(self):
         """
@@ -400,12 +409,12 @@ class MyMSSQLSync():
         """
         sourceTriggers = self.getAllObjects(self.sourceMSSQL, "TRIGGER")
         targetTriggers = self.getAllObjects(self.targetMSSQL, "TRIGGER")
-
-        for trig in sourceTriggers:
-            definition = self.getObjectDefinition(self.sourceMSSQL, trig)
-            if trig in targetTriggers:
-                self.addSQL(f"DROP TRIGGER IF EXISTS [{trig}]")
-            self.addSQL(definition)
+        if sourceTriggers and targetTriggers:
+            for trig in sourceTriggers:
+                definition = self.getObjectDefinition(self.sourceMSSQL, trig)
+                if trig in targetTriggers:
+                    self.addSQL(f"DROP TRIGGER IF EXISTS [{trig}]")
+                self.addSQL(definition)
 
     def executeSyncSQL(self) -> tuple[bool,str]:
         """

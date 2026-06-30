@@ -60,7 +60,7 @@ class MyDevice:
         
         return hashlib.md5(deviceinfostr.encode()).hexdigest()
         
-    def getWindowsCPUID(self) -> str:
+    def getWindowsCPUID(self) -> str | None:
         """获取Windows的CPU序列号（用的是PowerShell不是wmic）"""
         try:
             cmd = [
@@ -73,7 +73,7 @@ class MyDevice:
         except:
             return None
             
-    def getWindowsBoardID(self) -> str:
+    def getWindowsBoardID(self) -> str | None:
         """获取Windows主板序列号"""
         try:
             cmd = [
@@ -86,7 +86,7 @@ class MyDevice:
         except:
             return None
             
-    def getWindowsUUID(self) -> str:
+    def getWindowsUUID(self) -> str | None:
         """获取Windows系统UUID"""
         try:
             cmd = [
@@ -99,7 +99,7 @@ class MyDevice:
         except:
             return None
             
-    def getLinuxMachineID(slef) -> str:
+    def getLinuxMachineID(self) -> str | None:
         """获取Linux的MachineID"""
         try:
             with open("/etc/machine-id", "r") as f:
@@ -108,7 +108,7 @@ class MyDevice:
         except:
             return None
         
-    def getMAC(self) -> str:
+    def getMAC(self) -> str | None:
         """获取MAC地址"""
         try:
             mac = uuid.getnode()

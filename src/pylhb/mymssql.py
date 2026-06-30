@@ -11,6 +11,7 @@ import os
 import pyodbc
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 class MyMSSQL:
     """MSSQL管理类"""
@@ -99,7 +100,9 @@ class MyMSSQL:
     @property
     def IsAutoCommit(self):
         """获取是否自动提交"""
-        return self.conn.autocommit
+        if self.conn:
+            return self.conn.autocommit
+        return False
 
     # getter-服务器名称
     @property
@@ -218,7 +221,7 @@ class MyMSSQL:
             是否成功
             执行结果
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         try:
             sql = f"""
@@ -264,7 +267,7 @@ class MyMSSQL:
             是否成功
             执行结果
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         try:
             # 查杀此数据库的连接进程
@@ -312,7 +315,7 @@ class MyMSSQL:
             是否成功
             执行结果
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         try:
             columns = ", ".join(data.keys())
@@ -323,7 +326,7 @@ class MyMSSQL:
         except Exception as e:
             return (False,str(e))
             
-    async def update4Async(self, table_name: str, data: dict, where: str, params: tuple[any]):
+    async def update4Async(self, table_name: str, data: dict, where: str, params: tuple[Any]):
         """
         异步修改记录
         Args:
@@ -344,7 +347,7 @@ class MyMSSQL:
             params
         )
         
-    def update(self, tableName: str, data: dict, where: str, params: tuple[any]):
+    def update(self, tableName: str, data: dict, where: str, params: tuple[Any]):
         """
         修改记录
         Args:
@@ -356,7 +359,7 @@ class MyMSSQL:
             是否成功
             执行结果
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         try:
             set_clause = ", ".join([f"{key} = ?" for key in data.keys()])
@@ -367,7 +370,7 @@ class MyMSSQL:
         except Exception as e:
             return (False,str(e))
         
-    async def delete4Async(self, tableName: str, where: str, params: tuple[any]):
+    async def delete4Async(self, tableName: str, where: str, params: tuple[Any]):
         """
         异步删除记录
         Args:
@@ -386,7 +389,7 @@ class MyMSSQL:
             params
         )
         
-    def delete(self, tableName: str, where: str, params: tuple[any]):
+    def delete(self, tableName: str, where: str, params: tuple[Any]):
         """
         删除记录
         Args:
@@ -397,7 +400,7 @@ class MyMSSQL:
             是否成功
             执行结果
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         try:
             sql = f"DELETE FROM {tableName} WHERE {where}"
@@ -432,16 +435,17 @@ class MyMSSQL:
             执行结果
             是否存在
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。",False
         try:
             self.cursor.execute(sql)
-            exists = self.cursor.fetchone()[0] > 0
+            row = self.cursor.fetchone()
+            exists = exists = row is not None and row[0] > 0
             return True,"OK",exists
         except Exception as e:
             return False,str(e),False
             
-    async def select4Async(self, tableName, columns: tuple[str] = None, where=None, params: tuple[any]=None,toDict=True):
+    async def select4Async(self, tableName, columns: tuple[str] | None = None, where=None, params: tuple[Any] | None=None,toDict=True):
         """
         异步查询数据
         Args:
@@ -465,7 +469,7 @@ class MyMSSQL:
             toDict
         )
         
-    def select(self, tableName, columns: tuple[str] = None, where=None, params: tuple[any]=None,toDict=True):
+    def select(self, tableName, columns: tuple[str] | None = None, where=None, params: tuple[Any] | None=None,toDict=True):
         """
         查询数据
         Args:
@@ -479,7 +483,7 @@ class MyMSSQL:
             执行结果
             字典/列表
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。",None
         try:
             cols = "*" if columns is None else ", ".join(columns)
@@ -493,12 +497,16 @@ class MyMSSQL:
                 self.cursor.execute(sql)
             if toDict:
                 # 获取列名
-                columns = [column[0] for column in self.cursor.description]
+                descs: list[str] | None = [column[0] for column in self.cursor.description]
                 # 转换为字典列表
-                data = []
-                for row in self.cursor.fetchall():
-                    data.append(dict(zip(columns, row)))
-                return True,"OK",data
+                if descs:
+                    data = []
+                    for row in self.cursor.fetchall():
+                        data.append(dict(zip(descs, row)))
+                    return True,"OK",data
+                else:
+                    data = self.cursor.fetchall()
+                    return True,"OK",data
             else:
                 data = self.cursor.fetchall()
                 return True,"OK",data
@@ -530,7 +538,7 @@ class MyMSSQL:
         Returns:
             字典/列表
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return None
         try:
             self.cursor.execute(sql)
@@ -571,7 +579,7 @@ class MyMSSQL:
             是否成功
             执行结果
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         try:
             self.cursor.execute(sql)
@@ -579,7 +587,7 @@ class MyMSSQL:
         except Exception as e:
             return (False,str(e))
 
-    async def execProc4Async(self,procName,params: tuple[any] = None):
+    async def execProc4Async(self,procName,params: tuple[Any] | None = None):
         """
         异步执行存储过程
         Args:
@@ -596,7 +604,7 @@ class MyMSSQL:
             params
         )
         
-    def execProc(self,procName,params: tuple[any] = None):
+    def execProc(self,procName,params: tuple[Any] | None = None):
         """
         执行存储过程
         Args:
@@ -606,7 +614,7 @@ class MyMSSQL:
             是否成功
             执行结果
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return (False,"未连接数据库。")
         try:
             if params:
@@ -620,7 +628,7 @@ class MyMSSQL:
         except Exception as e:
             return (False,str(e))
 
-    async def execProcGet4Async(self,procName,params: list[any] = None):
+    async def execProcGet4Async(self,procName,params: list[Any] | None = None):
         """
         异步执行存储过程
         Args:
@@ -638,7 +646,7 @@ class MyMSSQL:
             params
         )
         
-    def execProcGet(self,procName,params: list[any] = None):
+    def execProcGet(self,procName,params: list[Any] | None = None):
         """
         执行存储过程并返回数据
         Args:
@@ -649,7 +657,7 @@ class MyMSSQL:
             执行结果
             数据
         """
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return (False,"未连接数据库。",None)
         try:
             if params:
@@ -672,7 +680,7 @@ class MyMSSQL:
 
     def commit(self):
         """提交事务"""
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return
         if self.conn.autocommit==True:
             return
@@ -680,7 +688,7 @@ class MyMSSQL:
 
     def rollback(self):
         """回滚事务"""
-        if not self.conn:
+        if not self.conn or not self.cursor:
             return
         self.conn.rollback()
 

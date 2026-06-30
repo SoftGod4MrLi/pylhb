@@ -48,13 +48,23 @@ class MyLog:
         """
         if kwargs:
             log += f" | {kwargs}"
-        if withCallInfos:    
-            callFrame = inspect.currentframe().f_back
-            callInfo = inspect.getframeinfo(callFrame)
-            if callInfo.function=="<module>":
-                self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log)
+        if withCallInfos:
+            frame=inspect.currentframe()
+            if frame:
+                callFrame = frame.f_back
+                if callFrame:
+                    callInfo = inspect.getframeinfo(callFrame)
+                    if callInfo:
+                        if callInfo.function=="<module>":
+                            self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log)
+                        else:
+                            self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log)
+                    else:
+                        self._writeLog(log)
+                else:
+                    self._writeLog(log)
             else:
-                self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log)
+                self._writeLog(log)
         else:
             self._writeLog(log)
 
@@ -68,13 +78,23 @@ class MyLog:
         """
         if kwargs:
             log += f" | {kwargs}"
-        if withCallInfos:    
-            callFrame = inspect.currentframe().f_back
-            callInfo = inspect.getframeinfo(callFrame)
-            if callInfo.function=="<module>":
-                self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Debug")
+        if withCallInfos:
+            frame = inspect.currentframe()
+            if frame:
+                callFrame = frame.f_back
+                if callFrame:
+                    callInfo = inspect.getframeinfo(callFrame)
+                    if callInfo:
+                        if callInfo.function=="<module>":
+                            self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Debug")
+                        else:
+                            self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Debug")
+                    else:
+                         self._writeLog(log, "Debug")
+                else:
+                    self._writeLog(log, "Debug")
             else:
-                self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Debug")
+                self._writeLog(log, "Debug")
         else:
             self._writeLog(log, "Debug")
             
@@ -88,13 +108,23 @@ class MyLog:
         """
         if kwargs:
             log += f" | {kwargs}"
-        if withCallInfos:    
-            callFrame = inspect.currentframe().f_back
-            callInfo = inspect.getframeinfo(callFrame)
-            if callInfo.function=="<module>":
-                self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Info")
+        if withCallInfos:
+            frame = inspect.currentframe()
+            if frame:
+                callFrame = frame.f_back
+                if callFrame:
+                    callInfo = inspect.getframeinfo(callFrame)
+                    if callInfo:
+                        if callInfo.function=="<module>":
+                            self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Info")
+                        else:
+                            self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Info")
+                    else:
+                         self._writeLog(log, "Info")
+                else:
+                    self._writeLog(log, "Info")
             else:
-                self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Info")
+                self._writeLog(log, "Info")
         else:
             self._writeLog(log, "Info")
             
@@ -108,13 +138,23 @@ class MyLog:
         """
         if kwargs:
             log += f" | {kwargs}"
-        if withCallInfos:    
-            callFrame = inspect.currentframe().f_back
-            callInfo = inspect.getframeinfo(callFrame)
-            if callInfo.function=="<module>":
-                self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Warning")
+        if withCallInfos:
+            frame = inspect.currentframe()
+            if frame:
+                callFrame = frame.f_back
+                if callFrame:
+                    callInfo = inspect.getframeinfo(callFrame)
+                    if callInfo:
+                        if callInfo.function=="<module>":
+                            self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Warning")
+                        else:
+                            self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Warning")
+                    else:
+                         self._writeLog(log, "Warning")
+                else:
+                    self._writeLog(log, "Warning")
             else:
-                self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Warning")
+                self._writeLog(log, "Warning")
         else:
             self._writeLog(log, "Warning")
             
@@ -128,13 +168,23 @@ class MyLog:
         """
         if kwargs:
             log += f" | {kwargs}"
-        if withCallInfos:    
-            callFrame = inspect.currentframe().f_back
-            callInfo = inspect.getframeinfo(callFrame)
-            if callInfo.function=="<module>":
-                self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Error")
+        if withCallInfos:
+            frame = inspect.currentframe()
+            if frame:
+                callFrame = frame.f_back
+                if callFrame:
+                    callInfo = inspect.getframeinfo(callFrame)
+                    if callInfo:
+                        if callInfo.function=="<module>":
+                            self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Error")
+                        else:
+                            self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Error")
+                    else:
+                         self._writeLog(log, "Error")
+                else:
+                    self._writeLog(log, "Error")
             else:
-                self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Error")
+                self._writeLog(log, "Error")
         else:
             self._writeLog(log, "Error")
             
@@ -148,13 +198,23 @@ class MyLog:
         """
         if kwargs:
             log += f" | {kwargs}"
-        if withCallInfos:    
-            callFrame = inspect.currentframe().f_back
-            callInfo = inspect.getframeinfo(callFrame)
-            if callInfo.function=="<module>":
-                self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Critical")
+        if withCallInfos:
+            frame = inspect.currentframe()
+            if frame:
+                callFrame = frame.f_back
+                if callFrame:
+                    callInfo = inspect.getframeinfo(callFrame)
+                    if callInfo:
+                        if callInfo.function=="<module>":
+                            self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, "Critical")
+                        else:
+                            self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Critical")
+                    else:
+                         self._writeLog(log, "Critical")
+                else:
+                    self._writeLog(log, "Critical")
             else:
-                self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, "Critical")
+                self._writeLog(log, "Critical")
         else:
             self._writeLog(log, "Critical")
             
@@ -169,13 +229,23 @@ class MyLog:
         """
         if kwargs:
             log += f" | {kwargs}"
-        if withCallInfos:    
-            callFrame = inspect.currentframe().f_back
-            callInfo = inspect.getframeinfo(callFrame)
-            if callInfo.function=="<module>":
-                self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, logType)
+        if withCallInfos:
+            frame = inspect.currentframe()
+            if frame:
+                callFrame = frame.f_back
+                if callFrame:
+                    callInfo = inspect.getframeinfo(callFrame)
+                    if callInfo:
+                        if callInfo.function=="<module>":
+                            self._writeLog(f"{callInfo.filename} > NoFunction > {callInfo.lineno}行" + "：" + log, logType)
+                        else:
+                            self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, logType)
+                    else:
+                         self._writeLog(log, logType)
+                else:
+                    self._writeLog(log, logType)
             else:
-                self._writeLog(f"{callInfo.filename} > {callInfo.function} > {callInfo.lineno}行" + "：" + log, logType)
+                self._writeLog(log, logType)
         else:
             self._writeLog(log, logType)
             

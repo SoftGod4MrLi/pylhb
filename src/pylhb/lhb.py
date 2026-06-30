@@ -1,9 +1,9 @@
+from enum import auto
 from nt import truncate
 import os
 import platform
 from datetime import datetime
-
-from pyodbc import SQL_SERVER_NAME, getDecimalSeparator
+from pyodbc import SQL_SERVER_NAME
 from .mymssqlmanager import MyMSSQLManager
 from .mydevice import MyDevice
 from .myspinner import SpinnerStyle,MySpinner
@@ -13,6 +13,13 @@ from .mymssqlsync import MyMSSQLSync
 import subprocess
 import getpass
 import webbrowser
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.header import Header
+from email.mime.application import MIMEApplication
+from email.mime.base import MIMEBase
+from email import encoders
 
 def showVersion():
     """显示版本号"""
@@ -21,7 +28,7 @@ def showVersion():
         # 直接从包元数据获取版本号
         ver = version("pylhb")
         print(f"pylhb {ver}")
-    except PackageNotFoundError:
+    except PackageNotFoundError:    # type: ignore
         print("Package not found.")
     except ImportError:
         print("Import errored.")
@@ -55,7 +62,7 @@ def checkAndCreatePath(path) -> bool:
         是否成功
     """
     if path=="":
-        return
+        return False
     try:
         if not os.path.exists(path):
             os.makedirs(path)
@@ -612,7 +619,7 @@ class MyMSSQLDo:
         
 class IISDo:
     """IIS处理"""
-    def createAppPool(self,poolName, runtimeVersion:str=None, enable32bit=False):
+    def createAppPool(self,poolName, runtimeVersion:str | None = None, enable32bit=False):
         """
         创建应用程序池
         Args：
@@ -628,7 +635,10 @@ class IISDo:
             if exists:
                 sp.stop("已经存在。",False)
             else:
-                iis.createAppPool(poolName,runtimeVersion)
+                if runtimeVersion:
+                    iis.createAppPool(poolName,runtimeVersion)
+                else:
+                    iis.createAppPool(poolName)
                 sp.stop("创建成功。")
         except Exception as e:
             sp.stop(f"创建失败：{e}",False)
@@ -1254,6 +1264,7 @@ class IISDo:
         print("  如：pylhb iis menu")
 
 class Dlowload:
+    """应用下载"""
     def __init__(self) -> None:
         pass
 
@@ -1350,3 +1361,156 @@ class Dlowload:
         print("欢迎使用pylhb download命令")
         print("1.打开菜单操作模式")
         print("  如：pylhb download menu")
+    
+class EmailDo(object):
+    """邮件发送"""
+    def __init__(self,smtp ,port,sendEmail,authCode):
+        """
+        构造函数
+        Args:
+            sendEmail：发件箱
+            authCode：发件箱授权码
+        """
+        self.smtp=smtp
+        self.port=port;
+        self.sendEmail=sendEmail
+        self.authCode=authCode
+        
+    # 拆发文件
+    def splitFile(self,fileName, chunkSize=20 * 1024 * 1024) -> list:
+        splitedFiles = []
+        with open(fileName, 'rb') as f:
+            part_num = 0
+            while True:
+                chunk = f.read(chunkSize)
+                if not chunk:
+                    break
+                part_num += 1
+                spletedFileName=f"{fileName}.part{part_num}"
+                splitedFiles.append(spletedFileName)
+                with open(spletedFileName, 'wb') as chunk_file:
+                    chunk_file.write(chunk)
+                
+        return splitedFiles
+
+    # 发送邮件
+    def sendMail(self,toMail,subject,body,fileName) ->tuple[bool,str]:
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = self.sendEmail
+            msg['To'] = toMail
+            if subject:
+                msg['Subject'] = f"{Header(subject, 'utf-8').encode()}"
+            else:
+                msg['Subject'] = f"{os.path.basename(fileName)}"
+            if body:
+                msg.attach(MIMEText(body, 'plain', 'utf-8'))
+            if fileName:
+                attachment = open(fileName, "rb")
+                part = MIMEBase('application', 'octet-stream')
+                part.set_payload(attachment.read())
+                encoders.encode_base64(part)
+                part.add_header('Content-Disposition', f"attachment; filename= {os.path.basename(fileName)}")
+                msg.attach(part)
+            
+            server = smtplib.SMTP(self.smtp, self.port)
+            server.starttls()
+            server.login(self.sendEmail, self.authCode)
+            server.sendmail(self.sendEmail, toMail, msg.as_string())
+            server.quit()
+            return True,"OK"
+        except Exception as e:
+            return False,f"发送失败：{e}"
+
+    # 发送
+    def send(self,toMail,subject,body,fileName,chunkSize=20 * 1024 * 1024):
+        sp=MySpinner(SpinnerStyle.BRAILLE, "正在发送中...")
+        sp.start()
+        try:
+            # 拆分文件
+            splitedFiles = self.splitFile(fileName, chunkSize)
+            msgs=[]
+            if len(splitedFiles)>0:
+                for file in splitedFiles:
+                    # 发送邮件
+                    (successed,msg) = self.sendMail(toMail,subject,body,file)
+                    if successed:
+                        msgs.append(f"文件（{file}）发送成功。")
+                    else:
+                         msgs.append(f"文件（{file}）发送失败：{msg}")
+            sp.stop("发送完成。")
+            print("发送日志：")
+            for msg in msgs:
+                print(msg)
+        except Exception as e:
+            sp.stop(f"创建失败：{e}",False)
+
+    # 菜单基础录入
+    def intputBase(self) -> bool:
+        try:
+            print("配置基础参数[4]：")
+            self.smtp=input("1.SMTP（默认为smtp.qq.com）: ")
+            if not self.smtp:
+                self.smtp="smtp.qq.com"
+            self.port=convertStr2Int(input("2.端口号（默认587）："),587)
+            if self.port==0:
+                self.port=587
+            self.sendEmail=input("3.发件箱：")
+            if not self.sendEmail:
+                self.sendEmail="596928288@qq.com"
+            self.authCode=input("4.授权码：")
+            if not self.authCode:
+                self.authCode="itetkefvkdcybejc"
+            return True
+        except:
+            print("\n>> 错误：输入无效！")
+            return False
+            
+    # Shoe Menu
+    def showMenu(self):
+        print("\n" + "=" * 30)
+        print("🌺🌺系统菜单🌺🌺")
+        print("=" * 30)
+        print("1. 发送邮件")
+        print("0. 退出程序")
+        print("=" * 30)
+        
+    def choiceMenu(self):
+        result = self.intputBase()
+        if result:
+            running = True
+            while running:
+                self.showMenu()
+                try:
+                    user_input = input("请输入您的选择（数字）: ")
+                    choice = int(user_input)
+                    running = self.choiceDo(choice)
+                except ValueError:
+                    print("\n>> 错误：输入无效，请输入数字！")
+                    input(">> 按回车键继续...")
+                
+    def choiceDo(self,choice):
+        match(choice):
+            case 1:
+                print("👉发送邮件[4]：")
+                tomail=input("1.收件箱：")
+                if tomail:
+                    subject=input("2.主题（空为默认）：")
+                    body=input("3.内容（空为默认）：")
+                    file=input("4.文件：")
+                    if file:
+                        self.send(tomail,subject,body,file)
+                    else:
+                        print("您已放弃：未输入正确的文件。")
+                else:
+                    print("您已放弃：未输入正确的收件箱。")
+                return True
+            case 0:
+                return False
+            case _:
+                return True
+
+    def help(self) -> None:
+        print("欢迎使用pylhb email命令")
+        print("1.发送邮件")
+        print("  如：pylhb email menu")

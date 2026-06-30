@@ -3,8 +3,9 @@
 作者：李生
 描述：日期时间类
 """
-from datetime import datetime, timedelta, date,time
+from datetime import datetime, timedelta, date
 import calendar
+import time
 
 class MyDateTime:
     """日期时间类"""
@@ -97,7 +98,7 @@ class MyDateTime:
         weekdays = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
         return weekdays[date.weekday()]
         
-    def toDate(self) -> str:
+    def toDate(self) -> date:
         """获取类日期"""
         return self.now.date()
         
@@ -229,23 +230,7 @@ class MyDateTime:
         self.now=self.now + timedelta(microseconds=microseconds)
         return self
         
-    def convert2DateTime(self,dateTime,formatStr) -> datetime:
-        """
-        将字符串日期字符串转DateTime
-        Args:
-            dateTimeString:字符串日期
-            formatStr：格式字符串
-        Returns:
-            datetime
-        """
-        if isinstance(dateTime, date) and not isinstance(dateTime, datetime):
-            return datetime.combine(dateTime, datetime.min.time())
-        elif isinstance(dateTime, datetime):
-            return dateTime
-        elif isinstance(dateTime,str):
-            return datetime.strptime(dateTime, formatStr)
-        else:
-            return datetime.now()
+    
         
     def setDateTime(self,dateTime:date|datetime|str,formatStr=None) -> "MyDateTime":
         """
@@ -259,18 +244,8 @@ class MyDateTime:
         self.now=self.convert2DateTime(dateTime,formatStr)
         return self
         
-    def daysDiff(self,others,formatStr=None) -> int:
-        """
-        计算与另一个日期的天数差
-        Args:
-            others:另一个日期时间
-            formatStr:others为字符串时，需要此参数
-        """
-        otherDateTime=self.convert2DateTime(others,formatStr)
-        return abs((self.now - otherDateTime).days)
-        
     @staticmethod
-    def convert2DateTime(dateTime,formatStr=None) -> datetime:
+    def convert2DateTime(dateTime,formatStr) -> datetime:
         """
         转DateTime
         Args:
@@ -289,7 +264,7 @@ class MyDateTime:
             return datetime.now()
         
     @staticmethod
-    def daysDiff(fromDateTime,toDateTime,fromFormatStr=None,toFormatStr=None) -> None:
+    def daysDiff(fromDateTime,toDateTime,fromFormatStr=None,toFormatStr=None):
         """
         计算与另一个日期的天数差
         Args:

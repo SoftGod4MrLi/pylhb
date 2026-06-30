@@ -4,10 +4,11 @@
 描述：注册表读写
 """
 import winreg
+from typing import Any
 
 class MyReg:
     """注册表读写类"""
-    def get(self,valueName,root=winreg.HKEY_CURRENT_USER,path=r"Software\BDSoftGod")-> tuple[bool, any, int]:
+    def get(self,valueName,root=winreg.HKEY_CURRENT_USER,path=r"Software\BDSoftGod")-> tuple[bool, Any, int]:
         """
         读取
         Args:

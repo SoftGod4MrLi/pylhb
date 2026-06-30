@@ -150,6 +150,8 @@ class MyAccess:
             执行结果
             字典/列表
         """
+        if not self.cursor:
+            return False,"未连接数据库。",None
         try:
             if params:
                 self.cursor.execute(sql, params)
@@ -192,6 +194,8 @@ class MyAccess:
             信息
             爱影响行数
         """
+        if not self.cursor:
+            return False,"未连接数据库。",None
         try:
             columns = ', '.join(data.keys())
             placeholders = ', '.join(['?'] * len(data))
@@ -237,6 +241,8 @@ class MyAccess:
             信息
             爱影响行数
         """
+        if not self.cursor:
+            return False,"未连接数据库。",None
         try:
             set_clause = ', '.join([f"{k}=?" for k in data.keys()])
             sql = f"UPDATE {table} SET {set_clause} WHERE {whereClause}"
@@ -251,7 +257,7 @@ class MyAccess:
         except Exception as e:
             return False,f"更新数据失败: {e}",0
         
-    async def update4Async(self, table: str, data: dict[str, Any],whereClause: str, whereParams: tuple | list | None = None):
+    async def delete4Async(self, table: str, whereClause: str, whereParams: tuple | list | None = None):
         """
         异步删除数据
         Args：
@@ -268,12 +274,11 @@ class MyAccess:
             self.executor, 
             self.delete,
             table,
-            data,
             whereClause,
             whereParams
         )
         
-    def delete(self, table: str, whereClause: str, whereParams: tuple | list | None = None) -> int:
+    def delete(self, table: str, whereClause: str, whereParams: tuple | list | None = None):
         """
         删除数据
         Args：
@@ -286,6 +291,8 @@ class MyAccess:
             信息
             爱影响行数
         """
+        if not self.cursor:
+            return False,"未连接数据库。",0
         try:
             sql = f"DELETE FROM {table} WHERE {whereClause}"
             if whereParams:
@@ -298,13 +305,16 @@ class MyAccess:
 
     def useTransaction(self) -> None:
         """开启手动事务（关闭自动提交）"""
-        self.connection.autocommit = False
+        if self.connection:
+            self.connection.autocommit = False
 
     def commit(self) -> None:
         """提交当前事务"""
-        self.connection.commit()
+        if self.connection:
+            self.connection.commit()
 
     def rollback(self) -> None:
         """回滚当前事务"""
-        self.connection.rollback()
+        if self.connection:
+            self.connection.rollback()
 

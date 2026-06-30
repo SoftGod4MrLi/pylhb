@@ -9,7 +9,7 @@ import sys
 
 class MyDownload:
     """文件下载类"""
-    def downloadFile(url, savePath=None, showProgress = True):
+    def downloadFile(self, url, savePath=None, showProgress = True):
         """
         下载文件并显示进度条
         Args:

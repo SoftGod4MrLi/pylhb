@@ -308,14 +308,14 @@ class MyMSSQLManager:
             if userSQLCMD:
                 if self.trusted:
                     (sucessed,msg) = self._runSQLWithSQLCMD4Trusted(fileFullName);
-                    if successed:
+                    if sucessed:
                         return True,"OK",errors
                     else:
                         errors.append(msg)
                         return False,msg,errors
                 else:
                     (sucessed,msg) = self._runSQLWithSQLCMD(fileFullName)
-                    if successed:
+                    if sucessed:
                         return True,"OK",errors
                     else:
                         errors.append(msg)
@@ -362,22 +362,22 @@ class MyMSSQLManager:
             # 匹配 GO 或 GO 数字（如 GO 10）
             go_match = re.match(r'^GO\s*(\d*)\s*$', stripped_line, re.IGNORECASE)
             go_with_comment_match = re.match(r'^GO\s+(\d+)\s+--', stripped_line, re.IGNORECASE)
-            if go_match or go_with_comment_match:
-                # 获取执行次数
-                if go_match:
-                    count_str = go_match.group(1)
-                else:
+            count_str="1"
+            if go_match:
+                count_str = go_match.group(1)
+            else:
+                if go_with_comment_match:
                     count_str = go_with_comment_match.group(1)
+            count = int(count_str) if count_str else 1
+            # 保存当前语句
+            if current_statement:
+                statement = '\n'.join(current_statement).strip()
+                if statement:
+                    # 如果 count > 1，重复添加语句
+                    for _ in range(count):
+                        statements.append(statement)
+                current_statement = []
                 
-                count = int(count_str) if count_str else 1
-                # 保存当前语句
-                if current_statement:
-                    statement = '\n'.join(current_statement).strip()
-                    if statement:
-                        # 如果 count > 1，重复添加语句
-                        for _ in range(count):
-                            statements.append(statement)
-                    current_statement = []
             else:
                 # 添加到当前语句
                 current_statement.append(line.rstrip('\n'))

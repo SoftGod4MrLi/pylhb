@@ -49,7 +49,7 @@ class MyIIS:
         return False
 
     # 创建应用程序池
-    def createAppPool(self,poolName, runtimeVersion:str=None, enable32bit=False) -> tuple[bool,str]:
+    def createAppPool(self,poolName, runtimeVersion:str|None=None, enable32bit=False) -> tuple[bool,str]:
         """
         创建应用程序池
         Args:

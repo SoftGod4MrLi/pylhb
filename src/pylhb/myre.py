@@ -109,22 +109,5 @@ class MyRe:
     @classmethod
     def isIP(cls, value: str) -> bool:
         """验证是否为有效的IP地址（IPv4或IPv6）"""
-        return cls.is_ipv4(value) or cls.is_ipv6(value)
+        return cls.isIPv4(value) or cls.isIPv6(value)
     
-    @classmethod
-    def detectType(cls, value: str) -> str:
-        """自动检测字符串的类型"""
-        testers = [
-            ('phone', cls.is_phone),
-            ('email', cls.is_email),
-            ('id_card', cls.is_id_card),
-            ('ipv4', cls.is_ipv4),
-            ('ipv6', cls.is_ipv6),
-            ('postcode', cls.is_postcode),
-            ('url', cls.is_url),
-        ]
-        
-        for type_name, tester in testers:
-            if tester(value):
-                return type_name
-        return 'unknown'

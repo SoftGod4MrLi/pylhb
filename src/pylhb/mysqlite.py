@@ -60,8 +60,8 @@ class MySQLite:
             是否成功
             执行结果
         """
-        if not self.connection:
-            self.connect()
+        if not self.connection or not self.cursor:
+            return False,"未连接数据库。"
         cols = ", ".join([f"{name} {defn}" for name, defn in columns.items()])
         sql = f"CREATE TABLE IF NOT EXISTS {tableName} ({cols})"
         try:
@@ -98,8 +98,8 @@ class MySQLite:
             是否成功
             最大自增ID
         """
-        if not self.connection:
-            self.connect()
+        if not self.connection or not self.cursor:
+            return False,None
         columns = ", ".join(data.keys())
         placeholders = ", ".join(["?"] * len(data))
         values = tuple(data.values())
@@ -111,7 +111,7 @@ class MySQLite:
         except sqlite3.Error as e:
             return False,None
     
-    async def select4Async(self, tableName: str, columns: List[str] = None, where: str = None, params: Tuple[Any] = None):
+    async def select4Async(self, tableName: str, columns: List[str] | None = None, where: str | None = None, params: Tuple[Any] | None = None):
         """
         异步查询数据
         Args:
@@ -132,7 +132,7 @@ class MySQLite:
             params
         )
         
-    def select(self, tableName: str, columns: List[str] = None, where: str = None, params: Tuple[Any] = None):
+    def select(self, tableName: str, columns: List[str] | None = None, where: str | None = None, params: Tuple[Any] | None = None):
         """
         查询数据
         Args:
@@ -144,8 +144,8 @@ class MySQLite:
             是否成功
             数据列表
         """
-        if not self.connection:
-            self.connect()
+        if not self.connection or not self.cursor:
+            return False,[]
         cols = "*" if columns is None else ", ".join(columns)
         sql = f"SELECT {cols} FROM {tableName}"
         if where:
@@ -193,8 +193,8 @@ class MySQLite:
             是否成功
             执行结果
         """
-        if not self.connection:
-            self.connect()
+        if not self.connection or not self.cursor:
+            return False,"未连接数据库。"
         set_clause = ", ".join([f"{key} = ?" for key in data.keys()])
         values = tuple(data.values()) + params
         sql = f"UPDATE {tableName} SET {set_clause} WHERE {where}"
@@ -235,8 +235,8 @@ class MySQLite:
             是否成功
             执行结果
         """
-        if not self.connection:
-            self.connect()
+        if not self.connection or not self.cursor:
+            return False,"未连接数据库。"
         sql = f"DELETE FROM {tableName} WHERE {where}"
         try:
             self.cursor.execute(sql, params)
@@ -252,4 +252,4 @@ class MySQLite:
             self.cursor=None
         if self.connection:
             self.connection.close()
-            self.connect=None
+            self.connection=None

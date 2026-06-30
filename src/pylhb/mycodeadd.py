@@ -5,7 +5,7 @@
 """
 class MyCodeAdd:
     """编码相加类"""
-    def addCode(code: str, step: int = 1) -> str:
+    def addCode(self,code: str, step: int = 1) -> str:
         """将编码右边的数字部分增加指定步长，如 'A001' 步长2 -> 'A003'
         Args:
             code: 原始编码字符串

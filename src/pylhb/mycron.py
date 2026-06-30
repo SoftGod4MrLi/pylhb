@@ -41,7 +41,7 @@ class MyCron:
         return fields
     
     def _parseField(self, field: str, min_val: int, max_val: int, 
-                     special_chars: str = '', name_map: dict = None) -> List[int]:
+                     special_chars: str = '', name_map: dict | None = None) -> List[int]:
         """
         解析单个字段
         Args:
@@ -130,7 +130,7 @@ class MyCron:
             'weekday': self.parseWeekday()
         }
     
-    def getNextExecution(self, from_time: datetime = None, max_attempts: int = 1000) -> Optional[datetime]:
+    def getNextExecution(self, from_time: datetime | None = None, max_attempts: int = 1000) -> Optional[datetime]:
         """
         获取下一次执行时间
         
@@ -212,7 +212,7 @@ class MyCron:
         else:
             return dt.replace(month=dt.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
     
-    def getFutureExecutions(self, count: int = 5, from_time: datetime = None) -> List[datetime]:
+    def getFutureExecutions(self, count: int = 5, from_time: datetime | None = None) -> List[datetime]:
         """
         获取未来多次执行时间
         Args:
@@ -223,14 +223,15 @@ class MyCron:
         """
         executions = []
         current = from_time
-        
-        for _ in range(count):
-            next_time = self.getNextExecution(current)
-            if next_time:
-                executions.append(next_time)
-                current = next_time + timedelta(seconds=1)
-            else:
-                break
+
+        if current:
+            for _ in range(count):
+                next_time = self.getNextExecution(current)
+                if next_time:
+                    executions.append(next_time)
+                    current = next_time + timedelta(seconds=1)
+                else:
+                    break
         
         return executions
     

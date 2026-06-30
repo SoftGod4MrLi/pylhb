@@ -8,7 +8,7 @@ import csv
 
 class MyFile:
     """文件管理类"""
-    def saveDataDictionaryList2JSON(data,fileName) -> tuple[bool,str]:
+    def saveDataDictionaryList2JSON(self,data,fileName) -> tuple[bool,str]:
         """
         数据字典列表保存为JSON文件
         Args:
@@ -26,7 +26,7 @@ class MyFile:
         except Exception as e:
             return False,f"{e}"
         
-    def saveDataDictionaryList2CSV(data,fileName) -> tuple[bool,str]:
+    def saveDataDictionaryList2CSV(self,data,fileName) -> tuple[bool,str]:
         """
         数据字典列表保存为CSV文件
         Args:
@@ -48,7 +48,7 @@ class MyFile:
         except Exception as e:
             return False,f"{e}"
             
-    def readDataDictionaryListFromJSON(fileName):
+    def readDataDictionaryListFromJSON(self,fileName):
         """
         从JSON读取数据字典列表
         Args:
@@ -63,7 +63,7 @@ class MyFile:
         except Exception as e:
             return None
     
-    def readDataDictionaryListFromCSV(fileName):
+    def readDataDictionaryListFromCSV(self,fileName):
         """
         从CSV读取数据字典列表
         Args:
@@ -81,7 +81,7 @@ class MyFile:
         except Exception as e:
             return None
         
-    def splitFile(fileName, chunkSize = 20 * 1024 * 1024):
+    def splitFile(self,fileName, chunkSize = 20 * 1024 * 1024):
         """
         拆发文件
         Args:
@@ -107,7 +107,7 @@ class MyFile:
         except Exception as e:
             return False,0,None
     
-    def mergeFiles(splitedFiles, mergeToFile) -> bool:
+    def mergeFiles(self,splitedFiles, mergeToFile) -> bool:
         """
         合并文件
         Args:

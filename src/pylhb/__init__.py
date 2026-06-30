@@ -1,7 +1,7 @@
 import argparse
 import platform
 # Base
-from .lhb import showVersion,showDeviceInfos,MyMSSQLDo,IISDo,Dlowload
+from .lhb import showVersion,showDeviceInfos,MyMSSQLDo,IISDo,Dlowload,EmailDo
 # Mr.Lee's Module
 from .myini import MyINI
 from .myjson import MyJSON
@@ -24,56 +24,85 @@ from .myspinner import SpinnerStyle,MySpinner
 from .myaccess import MyAccess
 
 # 导出列表
-__all__ = []
 if platform.system()=="Windows":
     from .mysubscribe import MySubscribe
     from .myiis import MyIIS
     from .myreg import MyReg
     from .myenv import MyEnv
-    __all__.extend(["MySubscribe", "MyIIS", "MyReg","MyEnv"])
+    __all__ = [
+        "MySubscribe",
+        "MyIIS",
+        "MyReg",
+        "MyEnv",
+        "MyINI",
+        "MyJSON",
+        "MyLog",
+        "MyMSSQL",
+        "MyMSSQLManager",
+        "MySQLite",
+        "MyAsymClipher",
+        "MyXORCipher",
+        "MyFernetCipher",
+        "MyBlowfishCipher",
+        "MySnowflake",
+        "MyDevice",
+        "MySubscribe",
+        "MyIIS",
+        "MyReg",
+        "MyEmail",
+        "MyFile",
+        "MyDownload",
+        "MyDateTime",
+        "MySQLInjection",
+        "MyCodeAdd",
+        "MyCron",
+        "MyRe",
+        "SpinnerStyle",
+        "MySpinner",
+        "MyAccess"
+    ]
 if platform.system()=="Linux":
     from .mysubscribe import MySubscribe
-    __all__.extend(["MySubscribe",])
-
-# 跨平台通用接口
-__all__.append([
-    "MyINI",
-    "MyJSON",
-    "MyLog",
-    "MyMSSQL",
-    "MyMSSQLManager",
-    "MySQLite",
-    "MyAsymClipher",
-    "MyXORCipher",
-    "MyFernetCipher",
-    "MyBlowfishCipher",
-    "MySnowflake",
-    "MyDevice",
-    "MySubscribe",
-    "MyIIS",
-    "MyReg",
-    "MyEmail",
-    "MyFile",
-    "MyDownload",
-    "MyDateTime",
-    "MySQLInjection",
-    "MyCodeAdd",
-    "MyCron",
-    "MyRe",
-    "SpinnerStyle",
-    "MySpinner",
-    "MyAccess"
-])
+    __all__ = [
+        "MySubscribe",
+        "MyINI",
+        "MyJSON",
+        "MyLog",
+        "MyMSSQL",
+        "MyMSSQLManager",
+        "MySQLite",
+        "MyAsymClipher",
+        "MyXORCipher",
+        "MyFernetCipher",
+        "MyBlowfishCipher",
+        "MySnowflake",
+        "MyDevice",
+        "MySubscribe",
+        "MyIIS",
+        "MyReg",
+        "MyEmail",
+        "MyFile",
+        "MyDownload",
+        "MyDateTime",
+        "MySQLInjection",
+        "MyCodeAdd",
+        "MyCron",
+        "MyRe",
+        "SpinnerStyle",
+        "MySpinner",
+        "MyAccess"
+    ]
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Mr.Lee's Helpers")
     # 位置参数
-    parser.add_argument("commands", nargs="?", default=None, choices=["mssql", "iis", "download"], help="Commands")
+    parser.add_argument("commands", nargs="?", default=None, choices=["mssql", "iis", "download","email"], help="Commands")
     parser.add_argument("subcommands", nargs="?", default=None, choices=["create","attach","fujia","detach","fenli","backup","backupall","restore", 
         "dellog","clearnull","drop","runsql","runsqlfile","createapppool","deleteapppool","createwebsite","createwebsiteapp",
         "deletewebsite","deletewebsiteapp","checkapppool","checkwebsite","checkwebsiteapp","startapppool","stopapppool","startwebsite",
         "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis","open",
-        "compare","choice","menu","help"], help="Subcommands")
+        "compare","choice","menu","send",
+        "help"], help="Subcommands")
     # 常规参数
     parser.add_argument('-v', '--version', action='store_true', help='显示版本号')
     parser.add_argument('-d', '--deviceinfos', action='store_true', help='显示设备信息')
@@ -107,6 +136,14 @@ def main() -> None:
     parser.add_argument("--backupname", default="", type=str, help="备份名称")
     parser.add_argument("--usesqlcmd", action='store_true', help='用SQLCMD执行SQL')
     parser.add_argument("--sql", default="", type=str, help="SQL脚本")
+    # 邮件参数
+    parser.add_argument("--smtp", default="smtp.qq.com", type=str, help="SMTP")
+    parser.add_argument("--smtpport", default=587, type=int, help="SMTP端口")
+    parser.add_argument("--sendmail", default="596928288@qq.com", type=str, help="发件箱")
+    parser.add_argument("--authcode", default="itetkefvkdcybejc", type=str, help="发件箱授权码")
+    parser.add_argument("--tomail", default="", type=str, help="收件箱")
+    parser.add_argument("--subject", default="", type=str, help="主题")
+    parser.add_argument("--body", default="", type=str, help="内容")
     # 解析
     args = parser.parse_args()
 
@@ -290,6 +327,24 @@ def main() -> None:
                         # 打开帮助
                         # pylhb download help
                         download.help()
+            case "email":
+                ed=EmailDo(args.smtp,args.smtpport,args.sendmail,args.authcode)
+                match args.subcommands:
+                    case "send":
+                        # 发邮件
+                        # pylhb email send --tomail cmerp@hotmail.com --file D:\\dd\\test.rar
+                        ed.send(args.tomail,args.subject,args.body,args.file)
+                    case "choice" | "menu":
+                        # 打开菜单选择操作
+                        # pylhb email choice
+                        # pylhb email menu
+                        ed.choiceMenu()
+                    case "help":
+                        # 打开帮助
+                        # pylhb email help
+                        ed.help()
+                        
+                
     else:
         # show version
         if args.version:

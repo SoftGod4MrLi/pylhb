@@ -265,7 +265,7 @@ class MyEnv:
             self.errMsg=f"列出变量失败: {e}"
         return variables
     
-    def backupPath(self, level: str = 'user', backup_file: str = None):
+    def backupPath(self, level: str = 'user', backup_file: str | None = None):
         """
         备份当前PATH配置
         Args:
