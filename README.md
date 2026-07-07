@@ -246,6 +246,20 @@ pylhb iis menu
 pylhb download menu
 ```
 
+### Email命令：
+
+- 发送邮件
+
+```
+pylhb email send --sendmail lhb@qq.com --authcode aaaaaaaaa --tomail cmerp@hotmail.com --file D:\\dd\\test.rar
+```
+
+- 打开菜单
+
+```
+pylhb email menu
+```
+
 ## 🌺mymssql模块
 
 通过ODBC访问Microsoft SQL Server。

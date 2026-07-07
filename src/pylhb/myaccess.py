@@ -11,7 +11,7 @@ from typing import Any
 class MyAccess:
     """
     Microsoft Access 数据库操作类（支持密码）
-    支持 .mdb 和 .accdb，自动适配驱动，提供事务、Pandas 集成及连接检测。
+    支持 .mdb 和 .accdb，自动适配驱动，提供事务集成及连接检测。
     """
     def __init__(self, dbPath: str, password: str | None = None,autoCommit=False, driver: str | None = None,maxWorker=5):
         """

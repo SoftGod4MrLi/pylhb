@@ -12,6 +12,7 @@ import pyodbc
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
+import platform
 
 class MyMSSQL:
     """MSSQL管理类"""
@@ -44,6 +45,34 @@ class MyMSSQL:
         self.executor = ThreadPoolExecutor(max_workers=maxWorker)
         self.connectStr=connectStr
         self.loop = asyncio.get_event_loop()
+
+    def getAllInstances4Windows(self):
+        """获取Windows系统里的Microsoft SQL Server实例（通过注册表，所以仅限Windows系统）"""
+        if platform.system()=="Windows":
+            try:
+                import winreg
+                instances = []
+                reg_path = r"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL"
+                reg_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path)
+                i = 0
+                while True:
+                    try:
+                        # 枚举键值，每个值代表一个实例
+                        instance_name, service_name, _ = winreg.EnumValue(reg_key, i)
+                        instances.append({
+                            "InstanceName": instance_name,
+                            "ServiceName": service_name
+                        })
+                        i += 1
+                    except OSError:
+                        # 没有更多实例时跳出循环
+                        break
+                winreg.CloseKey(reg_key)
+                return True,"OK",instances
+            except FileNotFoundError:
+                return False,"未打到SQL Server实例。",None
+        else:
+            return False,"仅限Windows调用。",None
         
     def getConnectString(self,useMaster=False) :
         """获取连接字符串"""
@@ -57,8 +86,9 @@ class MyMSSQL:
         if self.trusted:
             conn_str += "Trusted_Connection=yes;"
         else:
-            if self.user and self.password:
-                conn_str += f"UID={self.user};PWD={self.password};"
+            if self.user:
+                pwd="" if self.password is None else self.password
+                conn_str += f"UID={self.user};PWD={pwd};"
             if self.timeout>0:
                 conn_str += f"Connection Timeout={self.timeout};"
         return conn_str
