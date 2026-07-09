@@ -97,6 +97,18 @@ pylhb mssql compare -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer -
 pylhb mssql compare -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer -TS localhost\\sqlexpress -TU sa -TP fpsoft@123 -TD Test--comparetofile --file D:\\dd\\bkfile.bak
 ```
 
+- 启动SQL服务
+
+```
+pylhb mssql startservice --servicename MSSQLSERVER
+```
+
+- 停止SQL服务
+
+```
+pylhb mssql stopservice --servicename MSSQLSERVER
+```
+
 - 打开SSMS
 
 ```
@@ -434,20 +446,6 @@ from pylhb.mylog import MyLog
 if __name__ == "__main__":
     myLog= MyLog()
     myLog.add("This is a test log entry.")
-```
-
-## 🌺myjson模块
-
-json配置操作
-
-使用示例：
-
-```
-from pylhb.myjson import MyJSON
-
-if __name__ == "__main__":
-    appJson = MyJSON("config.json")
-    print(appJson.get("host"))
 ```
 
 ## 🌺mysqlite模块

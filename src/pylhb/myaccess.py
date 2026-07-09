@@ -23,11 +23,31 @@ class MyAccess:
         self.dbPath = dbPath
         self.password = password
         self.driver = driver or self._findDriver()
-        self.connection: pyodbc.Connection | None = None
+        self.conn: pyodbc.Connection | None = None
         self.cursor: pyodbc.Cursor | None = None
         self.autoCommit=autoCommit
         self.executor = ThreadPoolExecutor(max_workers=maxWorker)
         self.loop = asyncio.get_event_loop()
+
+    def __enter__(self) -> None:
+        # 进入with块时：自动连接数据库
+        self.connect()
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # 离开with块时：根据是否异常进行拉交与回滚，然后断开数据库连接
+        if self.conn:
+            if self.autoCommit==False:
+                if exc_type:
+                    # 如果发生了异常，撤销本次操作 (回滚)
+                    self.conn.rollback()
+                else:
+                    # 如果没有异常，正式写入数据库 (提交)
+                    self.conn.commit()
+            # 无论如何，都要关闭游标和连接，释放资源
+            self.close()
+        
+        # 返回 False 表示不吞没异常，让外部也能捕获到错误
+        return False
 
     @staticmethod
     def _findDriver() -> str:
@@ -70,11 +90,11 @@ class MyAccess:
         """
         try:
             connectString = self._buildConnectionString(exclusive)
-            self.connection = pyodbc.connect(connectString,autocommit=self.autoCommit)
-            self.cursor = self.connection.cursor()
+            self.conn = pyodbc.connect(connectString,autocommit=self.autoCommit)
+            self.cursor = self.conn.cursor()
             return True,"OK"
         except Exception as e:
-            self.connection=None
+            self.conn=None
             self.cursor=None
             return False,str(e)
 
@@ -83,9 +103,9 @@ class MyAccess:
         if self.cursor:
             self.cursor.close()
             self.cursor = None
-        if self.connection:
-            self.connection.close()
-            self.connection = None
+        if self.conn:
+            self.conn.close()
+            self.conn = None
 
     def isExclusive(self) -> bool:
         """
@@ -95,7 +115,7 @@ class MyAccess:
         """
         try:
             # 尝试独占连接（先关闭现有连接避免冲突）
-            if self.connection:
+            if self.conn:
                 self.close()
             testConnect = pyodbc.connect(self._buildConnectionString(exclusive=True), timeout=2)
             testConnect.close()
@@ -305,16 +325,16 @@ class MyAccess:
 
     def useTransaction(self) -> None:
         """开启手动事务（关闭自动提交）"""
-        if self.connection:
-            self.connection.autocommit = False
+        if self.conn:
+            self.conn.autocommit = False
 
     def commit(self) -> None:
         """提交当前事务"""
-        if self.connection:
-            self.connection.commit()
+        if self.conn:
+            self.conn.commit()
 
     def rollback(self) -> None:
         """回滚当前事务"""
-        if self.connection:
-            self.connection.rollback()
+        if self.conn:
+            self.conn.rollback()
 

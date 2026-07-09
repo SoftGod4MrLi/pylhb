@@ -95,7 +95,7 @@ wheels = [
 
 [[package]]
 name = "pylhb"
-version = "1.8.8"
+version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "pyodbc" },

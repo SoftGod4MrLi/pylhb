@@ -1,10 +1,9 @@
 import argparse
 import platform
 # Base
-from .lhb import showVersion,showDeviceInfos,MyMSSQLDo,IISDo,Dlowload,EmailDo
+from .lhb import showVersion,showDeviceInfos,MyMSSQLDo,IISDo,Dlowload,EmailDo,startSQLService,stopSQLService
 # Mr.Lee's Module
 from .myini import MyINI
-from .myjson import MyJSON
 from .mylog import MyLog
 from .mymssql import MyMSSQL
 from .mymssqlmanager import MyMSSQLManager
@@ -35,7 +34,6 @@ if platform.system()=="Windows":
         "MyReg",
         "MyEnv",
         "MyINI",
-        "MyJSON",
         "MyLog",
         "MyMSSQL",
         "MyMSSQLManager",
@@ -66,7 +64,6 @@ if platform.system()=="Linux":
     __all__ = [
         "MySubscribe",
         "MyINI",
-        "MyJSON",
         "MyLog",
         "MyMSSQL",
         "MyMSSQLManager",
@@ -97,12 +94,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Mr.Lee's Helpers")
     # 位置参数
     parser.add_argument("commands", nargs="?", default=None, choices=["mssql", "iis", "download","email"], help="Commands")
-    parser.add_argument("subcommands", nargs="?", default=None, choices=["create","attach","fujia","detach","fenli","backup","backupall","restore", 
-        "dellog","clearnull","drop","runsql","runsqlfile","createapppool","deleteapppool","createwebsite","createwebsiteapp",
-        "deletewebsite","deletewebsiteapp","checkapppool","checkwebsite","checkwebsiteapp","startapppool","stopapppool","startwebsite",
-        "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis","open",
-        "compare","choice","menu","send",
-        "help"], help="Subcommands")
+    parser.add_argument("subcommands", nargs="?", default=None, choices=[
+        # mssql子命令
+        "create","attach","fujia","detach","fenli","backup","backupall","restore", 
+        "dellog","clearnull","drop","runsql","runsqlfile","compare","startservice","stopservice",
+        # iis子命令
+        "createapppool","deleteapppool","createwebsite","createwebsiteapp","deletewebsite","deletewebsiteapp",
+        "checkapppool","checkwebsite","checkwebsiteapp","startapppool","stopapppool","startwebsite",
+        "stopwebsite","getapppoolstate","getwebsitestate","getapppoollist","getwebsitelist","backupiis","restoreiis",
+        # email子命令
+        "send","openqqmail","openhotmail",
+        # 公共子命令
+        "open","menu","help"
+    ], help="Subcommands")
     # 常规参数
     parser.add_argument('-v', '--version', action='store_true', help='显示版本号')
     parser.add_argument('-d', '--deviceinfos', action='store_true', help='显示设备信息')
@@ -117,6 +121,8 @@ def main() -> None:
     parser.add_argument("-ldf", "--ldffile", default="", type=str, help="日志文件")
     parser.add_argument("--force", action='store_true', help='强制，删除数据库必须带上')
     parser.add_argument("--trusted", action='store_true', help='信任（Windows身份登录)')
+    parser.add_argument("--sql", default="", type=str, help="SQL脚本")
+    parser.add_argument("--servicename", default="", type=str, help="SQL服务名称")
     # 目标mssql参数-仅限架构对比时才用到
     parser.add_argument("-TS", "--targetserver", default="127.0.0.1", type=str, help="（目标）服务器名称，默认127.0.0.1")
     parser.add_argument("-TPT", "--targetport", default=1433, type=int, help="（目标）端口号，默认1433")
@@ -135,7 +141,6 @@ def main() -> None:
     parser.add_argument("--hostname", default="", type=str, help="绑定的域名（可选）")
     parser.add_argument("--backupname", default="", type=str, help="备份名称")
     parser.add_argument("--usesqlcmd", action='store_true', help='用SQLCMD执行SQL')
-    parser.add_argument("--sql", default="", type=str, help="SQL脚本")
     # 邮件参数
     parser.add_argument("--smtp", default="smtp.qq.com", type=str, help="SMTP")
     parser.add_argument("--smtpport", default=587, type=int, help="SMTP端口")
@@ -206,13 +211,20 @@ def main() -> None:
                         # pylhb mssql compare -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer -TS localhost\\sqlexpress -TU sa -TP fpsoft@123 -TD Test
                         # pylhb mssql compare -S localhost\\sqlexpress -U sa -P fpsoft@123 -D MyCustomer -TS localhost\\sqlexpress -TU sa -TP fpsoft@123 -TD Test--comparetofile --file D:\\dd\\bkfile.bak
                         mssql.doCompareSync(args.targetserver,args.targetport,args.targetuser,args.targetpassword,args.targetdatabase,args.targertrusted,args.comparetofile,args.file)
+                    case "startservice":
+                        # 启动SQL服务
+                        # pylhb mssql startservice
+                        startSQLService(args.servicename)
+                    case "stopservice":
+                        # 启动SQL服务
+                        # pylhb mssql stopservice
+                        stopSQLService(args.servicename)
                     case "open":
                         # 打开SSMS
                         # pylhb mssql open
                         mssql.openSSMS()
-                    case "choice" | "menu":
+                    case "menu":
                         # 打开菜单选择操作
-                        # pylhb mssql choice
                         # pylhb mssql menu
                         mssql.choiceMenu()
                     case "help":
@@ -306,9 +318,8 @@ def main() -> None:
                         # 打开IIS管理器
                         # pylhb iis open
                         iis.openIIS()
-                    case "choice" | "menu":
+                    case "menu":
                         # 打开菜单选择操作
-                        # pylhb iis choice
                         # pylhb iis menu
                         iis.choiceMenu()
                     case "help":
@@ -318,9 +329,8 @@ def main() -> None:
             case "download":
                 download=Dlowload()
                 match args.subcommands:
-                    case "choice" | "menu":
+                    case "menu":
                         # 打开菜单选择操作
-                        # pylhb download choice
                         # pylhb download menu
                         download.choiceMenu()
                     case "help":
@@ -330,13 +340,20 @@ def main() -> None:
             case "email":
                 ed=EmailDo(args.smtp,args.smtpport,args.sendmail,args.authcode)
                 match args.subcommands:
+                    case "openqqmail":
+                        # 打开QQ邮箱
+                        # pylhb email openqqmail
+                        ed.openQQMail()
+                    case "openhotmail":
+                        # 打开Hotmail邮箱
+                        # pylhb email openhotmail
+                        ed.openHotmail()
                     case "send":
                         # 发邮件
                         # pylhb email send --tomail cmerp@hotmail.com --file D:\\dd\\test.rar
                         ed.send(args.tomail,args.subject,args.body,args.file)
-                    case "choice" | "menu":
+                    case "menu":
                         # 打开菜单选择操作
-                        # pylhb email choice
                         # pylhb email menu
                         ed.choiceMenu()
                     case "help":
@@ -344,7 +361,6 @@ def main() -> None:
                         # pylhb email help
                         ed.help()
                         
-                
     else:
         # show version
         if args.version:

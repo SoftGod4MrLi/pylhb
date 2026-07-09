@@ -8,16 +8,43 @@ import re
 from datetime import datetime
 from .mymssql import MyMSSQL
 import subprocess
+import platform
 
 class MyMSSQLManager:
     """Microsoft SQL Server 管理"""
-    def __init__(self, server,port, user, password, database,trusted=False):
+    def __init__(self, server=None,port=1433, user=None, password=None, database=None,trusted=False):
         self.server=server
         self.port=port
         self.user=user
         self.password=password
         self.database=database
         self.trusted=trusted
+
+    def startSQLServer(self,serviceName:str | None = None):
+        """启动 SQL Server"""
+        try:
+            if platform.system()=="Windows":
+                serName = serviceName if serviceName else "MSSQLSERVER"
+                subprocess.run(["net", "start", serName], check=True)
+            elif platform.system()=="Linux":
+                serName = serviceName if serviceName else "mssql-server"
+                subprocess.run(["systemctl", "start", serName], check=True)
+            return True,"OK"
+        except subprocess.CalledProcessError as e:
+            return False,f"启动失败：{e}"
+
+    def stopSQLServer(self,serviceName:str | None = None):
+        """停止 SQL Server"""
+        try:
+            if platform.system()=="Windows":
+                serName = serviceName if serviceName else "MSSQLSERVER"
+                subprocess.run(["net", "stop", serName], check=True)
+            elif platform.system()=="Linux":
+                serName = serviceName if serviceName else "mssql-server"
+                subprocess.run(["systemctl", "stop", serName], check=True)
+            return True,"OK"
+        except subprocess.CalledProcessError:
+            return False,f"停止失败：{e}"
 
     def create(self,mdfFileName=None,ldfFileName=None,initialSize4MB = 100,maxSize4MB: int = -1,fileGrowth4MB: int = 10) -> tuple[bool,str]:
         """

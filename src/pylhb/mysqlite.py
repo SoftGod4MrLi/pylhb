@@ -10,12 +10,33 @@ from concurrent.futures import ThreadPoolExecutor
 
 class MySQLite:
     """SQLite管理类"""
-    def __init__(self, dbName: str = "data.db",maxWorker=5):
+    def __init__(self, dbName: str = "data.db",autoCommit=False,maxWorker=5):
         self.dbName = dbName
-        self.connection = None
+        self.autoCommit=autoCommit
+        self.conn = None
         self.cursor = None
         self.executor = ThreadPoolExecutor(max_workers=maxWorker)
         self.loop = asyncio.get_event_loop()
+
+    def __enter__(self) -> None:
+        # 进入with块时：自动连接数据库
+        self.connect()
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # 离开with块时：根据是否异常进行拉交与回滚，然后断开数据库连接
+        if self.conn:
+            if self.autoCommit==False:
+                if exc_type:
+                    # 如果发生了异常，撤销本次操作 (回滚)
+                    self.conn.rollback()
+                else:
+                    # 如果没有异常，正式写入数据库 (提交)
+                    self.conn.commit()
+            # 无论如何，都要关闭游标和连接，释放资源
+            self.close()
+        
+        # 返回 False 表示不吞没异常，让外部也能捕获到错误
+        return False
     
     async def connect4Async(self):
         """异步连接数据库"""
@@ -27,8 +48,8 @@ class MySQLite:
     def connect(self):
         """连接数据库"""
         try:
-            self.connection = sqlite3.connect(self.dbName)
-            self.cursor = self.connection.cursor()
+            self.conn = sqlite3.connect(self.dbName,autocommit=self.autoCommit)
+            self.cursor = self.conn.cursor()
             return True,"OK"
         except sqlite3.Error as e:
             return False,str(e)
@@ -60,13 +81,13 @@ class MySQLite:
             是否成功
             执行结果
         """
-        if not self.connection or not self.cursor:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         cols = ", ".join([f"{name} {defn}" for name, defn in columns.items()])
         sql = f"CREATE TABLE IF NOT EXISTS {tableName} ({cols})"
         try:
             self.cursor.execute(sql)
-            self.connection.commit()
+            self.conn.commit()
             return True,"OK"
         except sqlite3.Error as e:
             return False,str(e)
@@ -98,7 +119,7 @@ class MySQLite:
             是否成功
             最大自增ID
         """
-        if not self.connection or not self.cursor:
+        if not self.conn or not self.cursor:
             return False,None
         columns = ", ".join(data.keys())
         placeholders = ", ".join(["?"] * len(data))
@@ -106,7 +127,7 @@ class MySQLite:
         sql = f"INSERT INTO {tableName} ({columns}) VALUES ({placeholders})"
         try:
             self.cursor.execute(sql, values)
-            self.connection.commit()
+            self.conn.commit()
             return True,self.cursor.lastrowid
         except sqlite3.Error as e:
             return False,None
@@ -144,7 +165,7 @@ class MySQLite:
             是否成功
             数据列表
         """
-        if not self.connection or not self.cursor:
+        if not self.conn or not self.cursor:
             return False,[]
         cols = "*" if columns is None else ", ".join(columns)
         sql = f"SELECT {cols} FROM {tableName}"
@@ -193,14 +214,14 @@ class MySQLite:
             是否成功
             执行结果
         """
-        if not self.connection or not self.cursor:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         set_clause = ", ".join([f"{key} = ?" for key in data.keys()])
         values = tuple(data.values()) + params
         sql = f"UPDATE {tableName} SET {set_clause} WHERE {where}"
         try:
             self.cursor.execute(sql, values)
-            self.connection.commit()
+            self.conn.commit()
             return True,"OK"
         except sqlite3.Error as e:
             return False,str(e)
@@ -235,21 +256,31 @@ class MySQLite:
             是否成功
             执行结果
         """
-        if not self.connection or not self.cursor:
+        if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         sql = f"DELETE FROM {tableName} WHERE {where}"
         try:
             self.cursor.execute(sql, params)
-            self.connection.commit()
+            self.conn.commit()
             return True,"OK"
         except sqlite3.Error as e:
             return False,str(e)
-    
+
+    def commit(self) -> None:
+        """提交当前事务"""
+        if self.conn:
+            self.conn.commit()
+
+    def rollback(self) -> None:
+        """回滚当前事务"""
+        if self.conn:
+            self.conn.rollback()
+            
     def close(self):
         """关闭连接"""
         if self.cursor:
             self.cursor.close()
             self.cursor=None
-        if self.connection:
-            self.connection.close()
-            self.connection=None
+        if self.conn:
+            self.conn.close()
+            self.conn=None

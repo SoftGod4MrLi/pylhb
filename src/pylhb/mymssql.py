@@ -46,6 +46,26 @@ class MyMSSQL:
         self.connectStr=connectStr
         self.loop = asyncio.get_event_loop()
 
+    def __enter__(self) -> None:
+        # 进入with块时：自动连接数据库
+        self.connect()
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # 离开with块时：根据是否异常进行拉交与回滚，然后断开数据库连接
+        if self.conn:
+            if self.autoCommit==False:
+                if exc_type:
+                    # 如果发生了异常，撤销本次操作 (回滚)
+                    self.conn.rollback()
+                else:
+                    # 如果没有异常，正式写入数据库 (提交)
+                    self.conn.commit()
+            # 无论如何，都要关闭游标和连接，释放资源
+            self.close()
+        
+        # 返回 False 表示不吞没异常，让外部也能捕获到错误
+        return False
+
     def getAllInstances4Windows(self):
         """获取Windows系统里的Microsoft SQL Server实例（通过注册表，所以仅限Windows系统）"""
         if platform.system()=="Windows":

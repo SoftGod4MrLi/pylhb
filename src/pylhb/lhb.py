@@ -70,6 +70,34 @@ def checkAndCreatePath(path) -> bool:
     except Exception as e:
         return False
 
+def startSQLService(serviceName:str|None=None) -> None:
+    """启动 SQL Server 服务"""
+    sp=MySpinner(SpinnerStyle.BRAILLE, "正在启动中...")
+    sp.start()
+    try:
+        mssql=MyMSSQLManager()
+        (successed,msg)=mssql.startSQLServer(serviceName)
+        if successed:
+            sp.stop("启动成功。")
+        else:
+            sp.stop(f"启动失败：{msg}",False)
+    except Exception as e:
+        sp.stop(f"启动失败：{e}",False)
+
+def stopSQLService(serviceName:str|None=None) -> None:
+    """停止 SQL Server 服务"""
+    sp=MySpinner(SpinnerStyle.BRAILLE, "正在停止中...")
+    sp.start()
+    try:
+        mssql=MyMSSQLManager()
+        (successed,msg)=mssql.stopSQLServer(serviceName)
+        if successed:
+            sp.stop("停止成功。")
+        else:
+            sp.stop(f"停止失败：{msg}",False)
+    except Exception as e:
+        sp.stop(f"停止失败：{e}",False)
+
 class MyMSSQLDo:
     """Microsoft SQL Server 处理"""
     def __init__(self, server ="127.0.0.1",port=1433, user="sa", password="", database ="master",trusted=False):
@@ -1375,7 +1403,15 @@ class EmailDo(object):
         self.port=port;
         self.sendEmail=sendEmail
         self.authCode=authCode
-        
+
+    def openQQMail(self) -> None:
+        """打开QQ邮箱"""
+        webbrowser.open("https://mail.qq.com/")
+
+    def openHotmail(self) -> None:
+        """打开Hotmail邮箱"""
+        webbrowser.open("https://outlook.live.com/mail/")
+
     # 拆发文件
     def splitFile(self,fileName, chunkSize=20 * 1024 * 1024) -> list:
         splitedFiles = []
