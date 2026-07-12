@@ -1,8 +1,7 @@
 import argparse
 import platform
-# Base
-from .lhb import showVersion,showDeviceInfos,MyMSSQLDo,IISDo,Dlowload,EmailDo,startSQLService,stopSQLService
 # Mr.Lee's Module
+from .mysubscribe import MySubscribe
 from .myini import MyINI
 from .mylog import MyLog
 from .mymssql import MyMSSQL
@@ -22,70 +21,40 @@ from .myre import MyRe
 from .myspinner import SpinnerStyle,MySpinner
 from .myaccess import MyAccess
 
+__all__ = [
+    "MySubscribe",
+    "MyINI",  
+    "MyLog",  
+    "MyMSSQL",
+    "MyMSSQLManager", 
+    "MySQLite",
+    "MyAsymClipher",  
+    "MyXORCipher",
+    "MyFernetCipher", 
+    "MyBlowfishCipher",
+    "MySnowflake",
+    "MyDevice",
+    "MyEmail",
+    "MyFile", 
+    "MyDownload", 
+    "MyDateTime", 
+    "MySQLInjection", 
+    "MyCodeAdd",  
+    "MyCron", 
+    "MyRe",
+    "SpinnerStyle",
+    "MySpinner",  
+    "MyAccess"
+]
+
 # 导出列表
 if platform.system()=="Windows":
-    from .mysubscribe import MySubscribe
     from .myiis import MyIIS
     from .myreg import MyReg
     from .myenv import MyEnv
-    __all__ = [
-        "MySubscribe",
-        "MyIIS",
-        "MyReg",
-        "MyEnv",
-        "MyINI",
-        "MyLog",
-        "MyMSSQL",
-        "MyMSSQLManager",
-        "MySQLite",
-        "MyAsymClipher",
-        "MyXORCipher",
-        "MyFernetCipher",
-        "MyBlowfishCipher",
-        "MySnowflake",
-        "MyDevice",
-        "MySubscribe",
-        "MyIIS",
-        "MyReg",
-        "MyEmail",
-        "MyFile",
-        "MyDownload",
-        "MyDateTime",
-        "MySQLInjection",
-        "MyCodeAdd",
-        "MyCron",
-        "MyRe",
-        "SpinnerStyle",
-        "MySpinner",
-        "MyAccess"
-    ]
-if platform.system()=="Linux":
-    from .mysubscribe import MySubscribe
-    __all__ = [
-        "MySubscribe",
-        "MyINI",
-        "MyLog",
-        "MyMSSQL",
-        "MyMSSQLManager",
-        "MySQLite",
-        "MyAsymClipher",
-        "MyXORCipher",
-        "MyFernetCipher",
-        "MyBlowfishCipher",
-        "MySnowflake",
-        "MyDevice",
-        "MyEmail",
-        "MyFile",
-        "MyDownload",
-        "MyDateTime",
-        "MySQLInjection",
-        "MyCodeAdd",
-        "MyCron",
-        "MyRe",
-        "SpinnerStyle",
-        "MySpinner",
-        "MyAccess"
-    ]
+    __all__ += ["MyIIS", "MyReg", "MyEnv"]
+else:
+    pass
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Mr.Lee's Helpers")
@@ -152,6 +121,7 @@ def main() -> None:
     if args.commands:
         match args.commands:
             case "mssql":
+                from .lhb import MyMSSQLDo,startSQLService,stopSQLService
                 mssql=MyMSSQLDo(args.server,args.port,args.user,args.password,args.database,args.trusted)
                 match args.subcommands:
                     case "create":
@@ -229,6 +199,10 @@ def main() -> None:
                         # pylhb mssql help
                         mssql.help()
             case "iis":
+                if platform.system() != "Windows":
+                    print("IIS 管理仅支持 Windows。")
+                    return
+                from .lhb import IISDo
                 iis=IISDo()
                 match args.subcommands:
                     case "createapppool":
@@ -324,6 +298,7 @@ def main() -> None:
                         # pylhb iis help
                         iis.help()
             case "download":
+                from .lhb import Dlowload
                 download=Dlowload()
                 match args.subcommands:
                     case "menu":
@@ -335,6 +310,7 @@ def main() -> None:
                         # pylhb download help
                         download.help()
             case "email":
+                from .lhb import EmailDo
                 ed=EmailDo(args.smtp,args.smtpport,args.sendmail,args.authcode)
                 match args.subcommands:
                     case "openqqmail":
@@ -361,13 +337,18 @@ def main() -> None:
     else:
         # show version
         if args.version:
+            from .lhb import showVersion
             showVersion()
             return
             
         # show device infomations
         if args.deviceinfos:
+            from .lhb import showDeviceInfos
             showDeviceInfos()
             return
+
+        # 即没有args.commands，也没有args.version，也没有args.deviceinfos，则显示帮助信息
+        parser.print_help()
 
 if __name__ == '__main__':
     main()
