@@ -4,7 +4,7 @@
 描述：SQLite数据库管理，包含连接、创建表、增删改查等操作。
 """
 import sqlite3
-from typing import List, Tuple, Any, Optional
+from typing import List
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
@@ -132,7 +132,7 @@ class MySQLite:
         except sqlite3.Error as e:
             return False,None
     
-    async def select4Async(self, tableName: str, columns: List[str] | None = None, where: str | None = None, params: Tuple[Any] | None = None):
+    async def select4Async(self, tableName: str, columns: List[str] | None = None, where: str | None = None, params: tuple | None = None,toDict=True):
         """
         异步查询数据
         Args:
@@ -150,10 +150,11 @@ class MySQLite:
             tableName,
             columns,
             where,
-            params
+            params,
+            toDict
         )
         
-    def select(self, tableName: str, columns: List[str] | None = None, where: str | None = None, params: Tuple[Any] | None = None):
+    def select(self, tableName: str, columns: List[str] | None = None, where: str | None = None, params: tuple | None = None,toDict=True):
         """
         查询数据
         Args:
@@ -172,16 +173,57 @@ class MySQLite:
         if where:
             sql += f" WHERE {where}"
         try:
-            if where and params:
-                self.cursor.execute(sql, params)
-            else:
-                self.cursor.execute(sql)
-            results = self.cursor.fetchall()
-            return True,results
+            self.cursor.execute(sql, (params if params is not None else ()))
+            rows = self.cursor.fetchall()
+            if not toDict:
+                return rows
+            columns = [desc[0] for desc in self.cursor.description]
+            return True,[dict(zip(columns, row)) for row in rows]
         except sqlite3.Error as e:
             return False,[]
+
+    async def exist4Async(self, tableName: str, where: str | None = None, params: tuple | None = None):
+        """
+        异步判断数据是否存在
+        Args:
+            tableName: 表名
+            where: 条件字符串（可选）
+            params: 条件参数（可选）
+        Returns:
+            是否成功, 是否存在
+        """
+        return await self.loop.run_in_executor(
+            self.executor,
+            self.exist,
+            tableName,
+            where,
+            params
+        )
     
-    async def update4Async(self, tableName: str, data: dict, where: str, params: Tuple[Any]):
+    def exist(self, tableName: str, where: str | None = None, params: tuple | None = None):
+        """
+        判断数据是否存在
+        Args:
+            tableName: 表名
+            where: 条件字符串（可选）
+            params: 条件参数（可选）
+        Returns:
+            是否成功, 是否存在
+        """
+        if not self.conn or not self.cursor:
+            return False, False
+        sql = f"SELECT COUNT(*) FROM {tableName}"
+        if where:
+            sql += f" WHERE {where}"
+        try:
+            self.cursor.execute(sql, (params if params is not None else ()))
+            count = self.cursor.fetchone()[0]
+            return True, count > 0
+        except sqlite3.Error as e:
+            print(f"{e}")
+            return False, False
+    
+    async def update4Async(self, tableName: str, data: dict, where: str | None = None, params: tuple | None=None):
         """
         异步更新数据
         Args:
@@ -202,7 +244,7 @@ class MySQLite:
             params
         )
         
-    def update(self, tableName: str, data: dict, where: str, params: Tuple[Any]):
+    def update(self, tableName: str, data: dict, where: str | None=None, params: tuple | None=None):
         """
         更新数据
         Args:
@@ -217,8 +259,10 @@ class MySQLite:
         if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         set_clause = ", ".join([f"{key} = ?" for key in data.keys()])
-        values = tuple(data.values()) + params
-        sql = f"UPDATE {tableName} SET {set_clause} WHERE {where}"
+        values = tuple(data.values()) + (params if params is not None else ())
+        sql = f"UPDATE {tableName} SET {set_clause}"
+        if where:
+            sql+= f" WHERE {where}"
         try:
             self.cursor.execute(sql, values)
             self.conn.commit()
@@ -226,7 +270,7 @@ class MySQLite:
         except sqlite3.Error as e:
             return False,str(e)
     
-    async def delete4Async(self, tableName: str, where: str, params: Tuple[Any]):
+    async def delete4Async(self, tableName: str, where: str | None=None, params: tuple | None=None):
         """
         异步删除数据
         Args:
@@ -245,7 +289,7 @@ class MySQLite:
             params
         )
         
-    def delete(self, tableName: str, where: str, params: Tuple[Any]):
+    def delete(self, tableName: str, where: str | None=None, params: tuple | None=None):
         """
         删除数据
         Args:
@@ -258,9 +302,11 @@ class MySQLite:
         """
         if not self.conn or not self.cursor:
             return False,"未连接数据库。"
-        sql = f"DELETE FROM {tableName} WHERE {where}"
+        sql = f"DELETE FROM {tableName}"
+        if where:
+            sql += f" WHERE {where}"
         try:
-            self.cursor.execute(sql, params)
+            self.cursor.execute(sql, (params if params is not None else ()))
             self.conn.commit()
             return True,"OK"
         except sqlite3.Error as e:

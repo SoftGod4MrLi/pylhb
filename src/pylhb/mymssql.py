@@ -7,11 +7,9 @@ ODBC Driver 17 for SQL Server下载：
 https://learn.microsoft.com/zh-cn/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16
 注意，如果是ODBC Driver 18 for SQL Server，那实例化时记得传driver.
 '''
-import os
 import pyodbc
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 import platform
 
 class MyMSSQL:
@@ -376,7 +374,7 @@ class MyMSSQL:
         except Exception as e:
             return (False,str(e))
             
-    async def update4Async(self, table_name: str, data: dict, where: str, params: tuple[Any]):
+    async def update4Async(self, table_name: str, data: dict, where: str, params: tuple | None=None):
         """
         异步修改记录
         Args:
@@ -397,7 +395,7 @@ class MyMSSQL:
             params
         )
         
-    def update(self, tableName: str, data: dict, where: str, params: tuple[Any]):
+    def update(self, tableName: str, data: dict, where: str | None = None, params: tuple | None=None):
         """
         修改记录
         Args:
@@ -413,14 +411,16 @@ class MyMSSQL:
             return False,"未连接数据库。"
         try:
             set_clause = ", ".join([f"{key} = ?" for key in data.keys()])
-            values = tuple(data.values()) + params
-            sql = f"UPDATE {tableName} SET {set_clause} WHERE {where}"
+            values = tuple(data.values()) + (params if params is not None else ())
+            sql = f"UPDATE {tableName} SET {set_clause}"
+            if where:
+                sql+=f" WHERE {where}"
             self.cursor.execute(sql, values)
             return (True,"OK")
         except Exception as e:
             return (False,str(e))
         
-    async def delete4Async(self, tableName: str, where: str, params: tuple[Any]):
+    async def delete4Async(self, tableName: str, where: str | None=None, params: tuple | None=None):
         """
         异步删除记录
         Args:
@@ -439,7 +439,7 @@ class MyMSSQL:
             params
         )
         
-    def delete(self, tableName: str, where: str, params: tuple[Any]):
+    def delete(self, tableName: str, where: str | None=None, params: tuple | None=None):
         """
         删除记录
         Args:
@@ -453,8 +453,10 @@ class MyMSSQL:
         if not self.conn or not self.cursor:
             return False,"未连接数据库。"
         try:
-            sql = f"DELETE FROM {tableName} WHERE {where}"
-            self.cursor.execute(sql, params)
+            sql = f"DELETE FROM {tableName}"
+            if where:
+                sql += f" WHERE {where}"
+            self.cursor.execute(sql, (params if params is not None else ()))
             return (True,"OK")
         except Exception as e:
             return (False,str(e))
@@ -495,7 +497,7 @@ class MyMSSQL:
         except Exception as e:
             return False,str(e),False
             
-    async def select4Async(self, tableName, columns: tuple[str] | None = None, where=None, params: tuple[Any] | None=None,toDict=True):
+    async def select4Async(self, tableName, columns: tuple[str] | None = None, where=None, params: tuple | None=None,toDict=True):
         """
         异步查询数据
         Args:
@@ -519,7 +521,7 @@ class MyMSSQL:
             toDict
         )
         
-    def select(self, tableName, columns: tuple[str] | None = None, where=None, params: tuple[Any] | None=None,toDict=True):
+    def select(self, tableName, columns: tuple[str] | None = None, where=None, params: tuple | None=None,toDict=True):
         """
         查询数据
         Args:
@@ -540,11 +542,7 @@ class MyMSSQL:
             sql = f"SELECT {cols} FROM {tableName}"
             if where:
                 sql += f" WHERE {where}"
-            print(sql)
-            if where and params:
-                self.cursor.execute(sql, params)
-            else:
-                self.cursor.execute(sql)
+            self.cursor.execute(sql, (params if params is not None else ()))
             if toDict:
                 # 获取列名
                 descs: list[str] | None = [column[0] for column in self.cursor.description]
@@ -637,7 +635,7 @@ class MyMSSQL:
         except Exception as e:
             return (False,str(e))
 
-    async def execProc4Async(self,procName,params: tuple[Any] | None = None):
+    async def execProc4Async(self,procName,params: tuple | None = None):
         """
         异步执行存储过程
         Args:
@@ -654,7 +652,7 @@ class MyMSSQL:
             params
         )
         
-    def execProc(self,procName,params: tuple[Any] | None = None):
+    def execProc(self,procName,params: tuple | None = None):
         """
         执行存储过程
         Args:
@@ -678,7 +676,7 @@ class MyMSSQL:
         except Exception as e:
             return (False,str(e))
 
-    async def execProcGet4Async(self,procName,params: list[Any] | None = None):
+    async def execProcGet4Async(self,procName,params: list | None = None):
         """
         异步执行存储过程
         Args:
@@ -696,7 +694,7 @@ class MyMSSQL:
             params
         )
         
-    def execProcGet(self,procName,params: list[Any] | None = None):
+    def execProcGet(self,procName,params: list | None = None):
         """
         执行存储过程并返回数据
         Args:

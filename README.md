@@ -411,6 +411,10 @@ if __name__ == "__main__":
     for user in users:
         print(user)
 
+    # 判断是否存在
+    ok, exists = db.exist("users", "id = ?", (1,))
+    print(ok,exists)
+
     # 更新数据
     update_data = {"age": 31}
     db.update("users", update_data, "name = ?", ("李四",))
